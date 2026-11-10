@@ -37,6 +37,16 @@ async def test_app_end_to_end(isolated):
         assert tui.index == 1
         await pilot.press("tab")
         assert tui.page == "graphs"
+        await pilot.press("tab")
+        assert tui.page == "all"
+        before = tui.index
+        await pilot.press("down")
+        assert tui.index == (before + 1) % len(tui.pollers)
+        await pilot.press("enter")
+        assert tui.page == "overview"
+        await pilot.press("tab", "tab")  # graphs, all
+        await pilot.press("tab")  # back to overview
+        assert tui.page == "overview"
         await pilot.press("3")
         await pilot.pause(8)
         assert tui.pollers[2].snapshot().state.name == "DOWN"
@@ -48,7 +58,10 @@ async def test_app_end_to_end(isolated):
         assert tui.poll_s == 2
         await pilot.press("escape")
         assert tui.overlay is None
-        # click the centre: page flips back
+        # click the centre: page flips
+        await pilot.click(offset=(50, 20))
+        assert tui.page == "graphs"
+        await pilot.click(offset=(50, 20))
         await pilot.click(offset=(50, 20))
         assert tui.page == "overview"
         # follow Omarchy: switching the theme underneath recolours the app

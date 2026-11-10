@@ -7,6 +7,7 @@ footer: the ≡ settings notch, the poll status, and which server is shown.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from . import fmt
@@ -311,8 +312,11 @@ def has_row2(v: View) -> bool:
 
 
 def has_row3(v: View) -> bool:
-    """Engine-specific detail (Flare's verify/acceptance/depth/weights, vLLM's
-    prefix-cache hit rate) on one extra line when there is any."""
+    """One extra line: latency percentiles for engines that export histogram
+    buckets (vLLM, TensorFold), Flare's verify/acceptance/depth/weights, and
+    vLLM's prefix-cache hit rate."""
+    if not all(nan(x) for x in (v.ttft_p50, v.ttft_p99, v.e2e_p50, v.e2e_p99)):
+        return True
     if not all(nan(x) for x in (v.verify_rate, v.accept_per_round, v.verify_depth, v.weight_gbps)):
         return True
     return not nan(v.prefix_hit_pct)
@@ -348,7 +352,26 @@ def averages(c: Canvas, y: int, v: View, ctx: Ctx, height: int, hint: str) -> No
         row += 1
     if height >= 5 and row < c.h - 1 and has_row3(v):
         w = Writer(c, row, 2)
-        if v.flare:
+        if not all(nan(x) for x in (v.ttft_p50, v.ttft_p99, v.e2e_p50, v.e2e_p99)):
+            # p50/p99 over the requests that finished in the recent window.
+            w.put("TTFT ", "LABEL").put("p50 ", "DIM").put(fmt.dur_short(v.ttft_p50), vrole(v.ttft_p50, "VALUE"))
+            w.put(" p99 ", "DIM").put(
+                fmt.dur_short(v.ttft_p99),
+                vrole(v.ttft_p99, "WARN" if not nan(v.ttft_p99) and v.ttft_p99 > 5 else "VALUE"),
+            )
+            w.put(SEP, "DIM").put("e2e ", "LABEL").put("p50 ", "DIM").put(
+                fmt.dur_short(v.e2e_p50), vrole(v.e2e_p50, "VALUE")
+            )
+            w.put(" p99 ", "DIM").put(
+                fmt.dur_short(v.e2e_p99), vrole(v.e2e_p99, "WARN" if not nan(v.e2e_p99) and v.e2e_p99 > 60 else "VALUE")
+            )
+            if not nan(v.pct_n):
+                w.put(SEP, "DIM").put(fmt.count(v.pct_n) + " req " + fmt.span(v.pct_window_s), "DIM")
+            if not nan(v.prefix_hit_pct):
+                w.put(SEP, "DIM").put("prefix-hit ", "LABEL").put(
+                    fmt.pct(v.prefix_hit_pct), vrole(v.prefix_hit_pct, "VALUE")
+                )
+        elif v.flare:
             w.put("verify ", "LABEL").put(
                 f"{v.verify_rate:.1f}/s" if not nan(v.verify_rate) else fmt.NO_DATA,
                 vrole(v.verify_rate, "VALUE"),
@@ -538,6 +561,123 @@ def graphs(c: Canvas, v: View, ctx: Ctx) -> None:
     y = header(c, v, ctx)
     graph_stack(c, y, v, ctx, c.h - y, close_last=False)
     footer(c, v, ctx, "BOX4", "tab: overview")
+
+
+# -- all servers -------------------------------------------------------------
+
+
+@dataclass
+class Col:
+    label: str
+    width: int
+    width_of: Callable[[View], str]
+    role: Callable[[View], str]
+
+
+def _srv_cols() -> list[Col]:
+    return [
+        Col("TG", 8, lambda v: fmt.speed(v.tg_live), lambda v: vrole(v.tg_live, "DECODE")),
+        Col("KV", 6, lambda v: fmt.pct(v.kv_pct), lambda v: fill_role(v.kv_pct)),
+        Col(
+            "PP",
+            8,
+            lambda v: fmt.rate(v.pp_live if not v.pp_per_request else v.pp_last),
+            lambda v: vrole(v.pp_live if not v.pp_per_request else v.pp_last, "PREFILL"),
+        ),
+        Col(
+            "run",
+            8,
+            lambda v: f"{v.running:.0f}" if nan(v.max_batch) else f"{v.running:.0f}/{v.max_batch:.0f}",
+            lambda v: vrole(v.running, "VALUE"),
+        ),
+        Col(
+            "TTFT",
+            7,
+            lambda v: fmt.dur_short(v.ttft_p50 if not nan(v.ttft_p50) else v.ttft_cum),
+            lambda v: vrole(v.ttft_cum, "VALUE"),
+        ),
+        Col(
+            "wait", 5, lambda v: fmt.count(v.waiting), lambda v: "WARN" if v.waiting > 0 else vrole(v.waiting, "VALUE")
+        ),
+        Col("MTP", 6, lambda v: fmt.pct(v.mtp_pct), lambda v: mtp_role(v.mtp_pct)),
+        Col("hit", 6, lambda v: fmt.pct(v.cache_hit_pct), lambda v: vrole(v.cache_hit_pct, "VALUE")),
+        Col("rtt", 6, lambda v: "" if nan(v.rtt_ms) else f"{v.rtt_ms:.0f}ms", lambda v: vrole(v.rtt_ms, "VALUE")),
+    ]
+
+
+def all_servers(c: Canvas, views: list[View], ctx: Ctx) -> None:
+    """One row per server: the live numbers, at a glance (SPEC.md §7.1 has no
+    such page on the device, which only shows the server on screen)."""
+    if c.w < MIN_W or c.h < MIN_H:
+        return too_small(c)
+    active = views[ctx.index] if views else View()
+    y = header(c, active, ctx)
+    box = "BOX2"
+    rows_room = c.h - y - 2  # top and bottom edges
+    cols = _srv_cols()
+    # Keep the columns that matter when the terminal is narrow: drop from
+    # the least important (rightmost) while the name/state area needs room.
+    while cols and (sum(col.width + 2 for col in cols) + 22) > (c.w - 3):
+        cols.pop()
+    ends: dict[str, int] = {}
+    x = c.w - 3
+    for col in reversed(cols):  # rightmost column sits at the right edge
+        ends[col.label] = x
+        x -= col.width + 2
+    state_end = (ends[cols[0].label] - cols[0].width - 1) if cols else c.w - 3
+    name_room = max(4, state_end - 4 - 10)
+
+    c.edge(
+        y,
+        box,
+        True,
+        [("All servers", "TITLE", True)],
+        [(col.label, "DIM", False) for col in reversed(cols)],
+    )
+    for r in range(y + 1, c.h - 1):
+        c.sides(r, box)
+
+    n = len(views)
+    first = max(0, min(ctx.index - rows_room // 2, n - rows_room))
+    for k, v in enumerate(views[first : first + rows_room]):
+        i = first + k
+        r = y + 1 + k
+        sel = i == ctx.index
+        stale = v.state in (ServerState.DOWN, ServerState.STALE, ServerState.UNKNOWN)
+        c.put(1, r, "▶" if sel else " ", "TITLE", True)
+        name = v.server or v.url or "?"
+        if len(name) > name_room:
+            name = name[: max(0, name_room - 1)] + "…"
+        c.text(3, r, name, "TITLE" if sel else "VALUE", sel)
+        c.text_right(state_end, r, v.state.value, STATE_ROLE[v.state], sel)
+        for col in cols:
+            c.text_right(ends[col.label], r, col.width_of(v), "DIM" if stale else col.role(v))
+        c.click(0, r, c.w, r + 1, f"open:{i}")
+    if not views:
+        c.text(2, y + 1, fmt.NO_DATA, "DIM")
+    hint_row = y + 1 + len(views) + 1
+    if hint_row < c.h - 2:
+        c.text(2, hint_row, "↑↓ select · enter: open · click a row", "DIM")
+    # Footer: totals across every server, so the page answers "how is the
+    # whole box doing" at a glance.
+    tgs = [v.tg_live for v in views if not nan(v.tg_live)]
+    runs = [v.running for v in views if not nan(v.running)]
+    waits = [v.waiting for v in views if not nan(v.waiting)]
+    total = f"Σ TG {fmt.speed(sum(tgs))} tok/s" if tgs else "Σ TG " + fmt.NO_DATA
+    detail = ""
+    if runs:
+        detail = f"{SEP}run {sum(runs):.0f}"
+        if waits:
+            detail += f"{SEP}wait {sum(waits):.0f}"
+    pos = f"{ctx.index + 1}/{len(views)}" if views else "0/0"
+    room = c.w - 12 - len(pos) - 4
+    mid = total + detail
+    if len(mid) > room:
+        mid = total
+    row = c.h - 1
+    spans = c.edge(row, box, False, [("≡", "TITLE", True), (mid, "LABEL", False)], [(pos, "DIM", False)])
+    if spans:
+        c.click(0, row, spans[0][1] + 2, row + 1, "settings")
 
 
 # -- settings ----------------------------------------------------------------

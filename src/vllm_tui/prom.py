@@ -103,6 +103,10 @@ class Sample:
     v: list[float] = field(default_factory=lambda: [NAN] * F_COUNT)
     streams: list[StreamSample] = field(default_factory=lambda: [StreamSample() for _ in range(SAMPLE_STREAMS)])
     model_name: str = ""
+    # Histogram buckets (latency percentiles): family -> [(le, cumulative
+    # count)] ascending, last le is +Inf. Buckets are cumulative since start;
+    # the deriver turns deltas between polls into p50/p99.
+    hist: dict[str, list[tuple[float, float]]] = field(default_factory=dict)
     n_tensorfold: int = 0
     n_vllm: int = 0
     n_flare: int = 0
@@ -198,6 +202,15 @@ FLARE_TABLE: dict[str, tuple[F | None, int]] = {
     "uptime_seconds": (None, SUM),  # identity: only Flare exports this
 }
 
+# Latency histograms worth a percentile: TTFT, end to end, queue time.
+# TensorFold calls its end-to-end histogram request_latency_seconds.
+HIST_FAMILIES = {
+    "time_to_first_token_seconds_bucket": "ttft",
+    "e2e_request_latency_seconds_bucket": "e2e",
+    "request_latency_seconds_bucket": "e2e",
+    "request_queue_time_seconds_bucket": "queue",
+}
+
 HEALTH_TABLE: dict[str, tuple[F, int]] = {
     "completion_tokens_total": (F.GEN_LIVE, SUM),
     "prefill_seconds_total": (F.HEALTH_PREFILL_S, SUM),
@@ -239,8 +252,17 @@ def _finite(v: float) -> bool:
     return not (math.isnan(v) or math.isinf(v))
 
 
+def _le(label: str) -> float:
+    label = label.strip()
+    if label in ("+Inf", "Inf", "inf"):
+        return math.inf
+    v = _num(label)
+    return v if not math.isnan(v) else NAN
+
+
 def parse(text: str, sample: Sample | None = None) -> Sample:
     s = sample or Sample()
+    buckets: dict[str, dict[float, float]] = {}
     v = s.v
     for raw in text.splitlines():
         line = raw.strip()
@@ -263,9 +285,19 @@ def parse(text: str, sample: Sample | None = None) -> Sample:
             if len(s.other_prefixes) < 3 and not name.startswith(_BOILERPLATE):
                 s.other_prefixes.add(name.split("_", 1)[0] + "_")
             continue
-        if suffix.endswith(("_bucket", "_created")):
+        if suffix.endswith("_created"):
             continue
         labels = parse_labels(labels_s) if labels_s else {}
+        if suffix.endswith("_bucket"):
+            family = HIST_FAMILIES.get(suffix)
+            if family and "le" in labels:
+                le = _le(labels["le"])
+                count = _num(value_s)
+                if not math.isnan(le) and _finite(count):
+                    # Sum over label sets (e.g. per model) at the same bound.
+                    fam = buckets.setdefault(family, {})
+                    fam[le] = fam.get(le, 0.0) + count
+            continue
         if not tf and labels and not s.model_name:
             s.model_name = labels.get("model_name", "")
         flare = name.startswith("flare_")
@@ -365,6 +397,7 @@ def parse(text: str, sample: Sample | None = None) -> Sample:
             s.v[F.PROMPT_TOKENS] = prefill + reused
         if math.isnan(s.v[F.CACHED_TOKENS]):
             s.v[F.CACHED_TOKENS] = reused
+    s.hist = {fam: sorted(b.items()) for fam, b in buckets.items()}
     # flare counts MTP in its own vocabulary; expose it the way every engine
     # exposes it, so the Averages box is the same everywhere.
     if s.has(F.FLARE_ACCEPTED) and not s.has(F.ACCEPTED_TOKENS):

@@ -14,6 +14,8 @@ from .server_info import Identity, ServerInfo
 
 HIST_LEN = 600  # samples kept for the graphs (20 min at 2 s); pages show what fits
 PEAK_LEN = 60  # KV peak covers the last 60 polls, as on the device
+PCT_WINDOW_S = 300.0  # latency percentiles cover the last 5 minutes
+PCT_SAMPLES = 300
 WINDOW = 15
 RESTART_SHOW_S = 30.0
 STREAM_LINGER_S = 10.0
@@ -107,6 +109,17 @@ class View:
     preemptions: float = NAN
     prefix_hit_pct: float = NAN
 
+    # Latency percentiles over the recent window (vLLM and TensorFold export
+    # histogram buckets; Flare doesn't).
+    ttft_p50: float = NAN
+    ttft_p99: float = NAN
+    e2e_p50: float = NAN
+    e2e_p99: float = NAN
+    queue_p50: float = NAN
+    queue_p99: float = NAN
+    pct_n: float = NAN
+    pct_window_s: float = NAN
+
     tg_hist: list[float] = field(default_factory=list)
     pp_hist: list[float] = field(default_factory=list)
     kv_hist: list[float] = field(default_factory=list)
@@ -186,6 +199,25 @@ def _mean(sum_: float, count: float) -> float:
     return sum_ / count if count > 0 else NAN
 
 
+def percentile(deltas: list[tuple[float, float]], p: float) -> float:
+    """p-th percentile from cumulative histogram deltas [(le, count)].
+    Linear interpolation inside the bucket; a percentile that lands in the
+    +Inf bucket reads the last finite bound."""
+    total = deltas[-1][1] if deltas else 0.0
+    if total <= 0:
+        return NAN
+    rank = p / 100.0 * total
+    prev_le, prev_c = 0.0, 0.0
+    for le, c in deltas:
+        if c >= rank:
+            if math.isinf(le):
+                return prev_le
+            inner = c - prev_c
+            return le if inner <= 0 else prev_le + (le - prev_le) * (rank - prev_c) / inner
+        prev_le, prev_c = le, c
+    return prev_le
+
+
 class Deriver:
     def __init__(self) -> None:
         self.win: deque[Sample] = deque(maxlen=WINDOW)
@@ -207,6 +239,7 @@ class Deriver:
         self.was_active = [False] * SAMPLE_STREAMS
         self.lingering = [False] * SAMPLE_STREAMS
         self.ended_t = [0.0] * SAMPLE_STREAMS
+        self.hist: deque[tuple[float, dict[str, list[tuple[float, float]]]]] = deque(maxlen=PCT_SAMPLES)
         self.last_pp_eng = NAN
         self.prefilling = False
         self.prefill_since = 0.0
@@ -257,6 +290,7 @@ class Deriver:
             restart = any(_went_down(s, p, f) for f in (F.PROMPT_TOKENS, F.GEN_TOKENS, F.TTFT_COUNT, F.E2E_COUNT))
         if restart:
             self.win.clear()
+            self.hist.clear()
             self.tg_peak = NAN
             self.tg_sum = 0.0
             self.tg_busy = 0
@@ -266,6 +300,8 @@ class Deriver:
             self.lingering = [False] * SAMPLE_STREAMS
 
         self.win.append(s)
+        if s.hist:
+            self.hist.append((s.t, s.hist))
         e = ident.engine
         tg = pp = NAN
         # Flare completes prefill in chunks (4096 tokens), so Δprefill/Δt is a
@@ -323,6 +359,47 @@ class Deriver:
         self.failures += 1
         self.reason = reason or "error"
         self._push(NAN, NAN, NAN)
+
+    def _percentiles(self, v: View, now: float) -> None:
+        """p50/p99 of TTFT, end-to-end and queue time for the requests that
+        finished in the recent window: deltas of the engines' histogram
+        buckets between the oldest sample in the window and now."""
+        if len(self.hist) < 2:
+            return
+        cutoff = now - PCT_WINDOW_S
+        base = next(((t, h) for t, h in self.hist if t >= cutoff), self.hist[0])
+        base_t, base_h = base
+        cur_h = self.hist[-1][1]
+        v.pct_window_s = now - base_t
+        for fam, p50, p99 in (
+            ("ttft", "ttft_p50", "ttft_p99"),
+            ("e2e", "e2e_p50", "e2e_p99"),
+            ("queue", "queue_p50", "queue_p99"),
+        ):
+            b, c = base_h.get(fam), cur_h.get(fam)
+            if not b or not c:
+                continue
+            bd, cd = dict(b), dict(c)
+            les = sorted(set(bd) | set(cd))
+            deltas: list[tuple[float, float]] = []
+            prev = 0.0
+            ok = True
+            for le in les:
+                if le not in bd or le not in cd:
+                    ok = False
+                    break
+                d = cd[le] - bd[le]
+                if d < 0:  # counter went down: restart between the samples
+                    ok = False
+                    break
+                prev = max(d, prev)
+                deltas.append((le, prev))
+            if not ok or not deltas or deltas[-1][1] <= 0:
+                continue
+            setattr(v, p50, percentile(deltas, 50))
+            setattr(v, p99, percentile(deltas, 99))
+            if fam == "ttft":
+                v.pct_n = deltas[-1][1]
 
     def _flare(self, v: View, cur: Sample, have_prev: bool) -> None:
         """Flare's own dashboard vocabulary (docs/api.md): prefill and
@@ -443,6 +520,7 @@ class Deriver:
                 self._flare(v, cur, len(self.win) >= 2)
                 if not math.isnan(self.info.max_batch):
                     v.max_batch = self.info.max_batch
+            self._percentiles(v, now)
             v.itl_cum = _mean(cur.get(F.ITL_SUM), cur.get(F.ITL_COUNT))
             v.queue_cum = _mean(cur.get(F.QUEUE_SUM), cur.get(F.QUEUE_COUNT))
             # Finished requests: flare and vLLM count them; TensorFold's

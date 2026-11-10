@@ -14,6 +14,7 @@ from textual.widget import Widget
 from . import pages, theme
 from .canvas import Canvas
 from .config import Config, save_state
+from .derive import View
 from .pages import POLL_OPTIONS, ROTATE_OPTIONS, Ctx, SettingsState, Strip
 from .poller import Poller
 
@@ -61,7 +62,8 @@ class VllmTui(App):
         self.rotate_s = int(state.get("rotate_s", cfg.rotate_s))
         self.paint_bg = bool(state.get("paint_bg", True))
         self.theme_slug = theme_override or state.get("theme", theme.FOLLOW)
-        self.page = state.get("page", "overview") if state.get("page") in ("overview", "graphs") else "overview"
+        pages_order = ("overview", "graphs", "all")
+        self.page = state.get("page") if state.get("page") in pages_order else "overview"
         self.index = int(state.get("server", 0)) if 0 <= int(state.get("server", 0)) < len(cfg.servers) else 0
         self.overlay: str | None = None  # "settings" | "help" | "blank"
         self.settings_state: SettingsState | None = None
@@ -158,16 +160,15 @@ class VllmTui(App):
             return now.strftime("%m-%d-%y %H:%M:%S")
         return now.strftime("%m-%d-%y ") + now.strftime("%I:%M:%S %p").lstrip("0")
 
-    def ctx(self) -> Ctx:
-        strips = []
-        for p in self.pollers:
-            v = p.snapshot()
-            strips.append(Strip(v.server, v.state, v.tg_live))
+    def snapshots(self) -> list[View]:
+        return [p.snapshot() for p in self.pollers]
+
+    def ctx(self, views: list[View]) -> Ctx:
         return Ctx(
             theme=self.palette,
             clock=self.clock(),
             index=self.index,
-            servers=strips,
+            servers=[Strip(v.server, v.state, v.tg_live) for v in views],
             page=self.page,
         )
 
@@ -175,15 +176,18 @@ class VllmTui(App):
         if self.overlay == "blank":
             pages.blank(c)
             return
+        views = self.snapshots()
         if self.overlay == "settings" and self.settings_state:
-            self.settings_rows = pages.settings(c, self.settings_state, self.ctx())
+            self.settings_rows = pages.settings(c, self.settings_state, self.ctx(views))
             return
-        if not self.pollers:
+        if not views:
             c.text(2, 1, "no servers configured", "STATE_WAIT", True)
             return
-        v = self.pollers[self.index].snapshot()
-        ctx = self.ctx()
-        (pages.graphs if self.page == "graphs" else pages.overview)(c, v, ctx)
+        ctx = self.ctx(views)
+        if self.page == "all":
+            pages.all_servers(c, views, ctx)
+        else:
+            (pages.graphs if self.page == "graphs" else pages.overview)(c, views[self.index], ctx)
         if self.overlay == "help":
             pages.help_overlay(c)
 
@@ -203,7 +207,8 @@ class VllmTui(App):
         self.dash.refresh()
 
     def toggle_page(self) -> None:
-        self.page = "graphs" if self.page == "overview" else "overview"
+        """overview → graphs → all servers → overview."""
+        self.page = {"overview": "graphs", "graphs": "all", "all": "overview"}[self.page]
         self.save()
         self.dash.refresh()
 
@@ -268,6 +273,10 @@ class VllmTui(App):
             self.switch(1)
         elif kind == "page":
             self.toggle_page()
+        elif kind == "open":
+            self.select(int(arg))
+            self.page = "overview"
+            self.save()
         elif kind == "close":
             self.close_overlay()
         elif kind == "poll":
@@ -320,7 +329,15 @@ class VllmTui(App):
             self.switch(-1)
         elif key in ("right", "l"):
             self.switch(1)
-        elif key in ("tab", "g", "space", "enter"):
+        elif key in ("up", "k") and self.page == "all":
+            self.switch(-1)
+        elif key in ("down", "j") and self.page == "all":
+            self.switch(1)
+        elif key in ("enter", "space") and self.page == "all":
+            self.page = "overview"
+            self.save()
+            self.dash.refresh()
+        elif key in ("tab", "space", "g", "enter"):
             self.toggle_page()
         elif key.isdigit() and key != "0":
             self.select(int(key) - 1)

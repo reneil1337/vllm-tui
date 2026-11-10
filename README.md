@@ -24,7 +24,7 @@ A btop-style terminal dashboard for your **vLLM** inference servers. It also spe
 
 - **Nothing to install on the GPU box.** It polls each server's own `/metrics` (plus `/health`, `/version` and `/v1/models`) and works out the rates itself. No Prometheus needed.
 - **Same dashboard for every engine.** vLLM, Flare and TensorFold get the same boxes and the same rows; whatever an engine doesn't export reads `no data`, and engine-only detail (Flare's verify/acceptance/depth, vLLM's prefix-cache rate) goes on one extra line. The engine name is shown in the header, and that's all you need to know about it.
-- **Several servers at once.** Each one is polled in the background. The server strip shows every server's state and live decode speed. Switch with ←/→, the number keys, or a click.
+- **Several servers at once.** Each one is polled in the background. The server strip shows every server's state and live decode speed. Switch with ←/→, the number keys, or a click. `tab` reaches an **All servers** page: one row per instance (TG, KV, PP, run/wait, TTFT, MTP, cache-hit, latency) plus totals for the whole box.
 - **Accurate numbers.** If a metric isn't exported, hasn't arrived yet, or can't be measured, the dashboard shows `no data` instead of a made-up 0. Restarts and outages show up as gaps in the graphs, not as spikes.
 - **Fits any terminal size.** On a tall terminal, the graphs move onto the overview page. The graphs show as much history as the width allows.
 
@@ -59,7 +59,8 @@ Servers given on the command line replace the ones in the config file. Theme, re
 | Key | Does |
 |---|---|
 | `←` `→` / `h` `l` / `1`–`9` | previous / next / pick a server |
-| `tab` / `g` / `space` | overview ↔ graphs |
+| `tab` / `space` | overview → graphs → all servers |
+| `↑` `↓` on All servers | pick a server, `enter` opens it |
 | `s` (or click `≡`) | settings: refresh rate, auto-rotate, background, theme |
 | `+` `-` | poll faster / slower |
 | `t` | cycle theme |
@@ -96,8 +97,10 @@ In Settings you can pin any installed Omarchy theme instead (stock or from `~/.c
 | **KV / peak** | KV-cache use now, and the highest reading over the last 60 polls (`used/pool tok`) |
 | **Streams** | per-slot table for TensorFold. It's hidden for vLLM, which has no per-request metrics |
 | **TTFT · MTP · cache-hit** | mean time to first token · speculative-decoding acceptance · prompt tokens served from the prefix cache |
+| **TTFT p50/p99 · e2e p50/p99** | latency percentiles over the requests that finished in the last 5 minutes, from the engine's histogram buckets (vLLM and TensorFold export them; Flare has no histograms, so the line falls back to its own counters) |
 | **ITL · queue · e2e · done · preempt · failed** | mean inter-token latency, queue time and end-to-end latency (where exported), finished requests, preemptions, failed requests |
 | **verify · accept · depth · weights** | Flare's own vocabulary: speculative verification steps per second, accepted drafts per draft-offering round, draft positions per verification step, and the weight bandwidth decode implies |
+| **All servers page** | every instance side by side, the selected row's header at the top, and `Σ TG`, run and wait totals in the footer |
 | **prefix-hit** | vLLM's prefix-cache hit rate, on the same extra line |
 | **header** | engine (`vLLM`, `Flare` or `TensorFold`, detected automatically), model, version, and the latency to the server as braille bars `⣀⣤⣶⣿` and in ms (the device showed Wi-Fi strength here). State: `OK IDLE/BUSY/WARM`; `CONNECTING`, `OK RESTART`, `STALE`; `DOWN`, `UNKNOWN` |
 | **footer** | `≡` settings, then `poll 2s · ok 0.4s ago` or the problem (`refused · retry 9s`, `dns gpu-box`, `timeout`, `http 503`, …) |

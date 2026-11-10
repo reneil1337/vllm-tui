@@ -2,7 +2,7 @@ import copy
 import math
 from pathlib import Path
 
-from vllm_tui import fmt, prom, theme
+from vllm_tui import fmt, pages, prom, theme
 from vllm_tui.canvas import Canvas
 from vllm_tui.derive import Deriver, ServerState, View
 from vllm_tui.pages import Ctx, Strip, graphs, overview
@@ -170,6 +170,54 @@ def test_flare_numbers_are_the_same_features():
     u = prom.parse("other_thing_total 1\nother_more 2\n")
     d2.on_sample(u, identify(u, None, ServerInfo()), ServerInfo())
     assert d2.fill(View(), 1.0, 2.0, 0).status.startswith("unknown engine · saw other_")
+
+
+def test_percentiles_from_bucket_deltas():
+    """p50/p99 come from the deltas of the engines' histogram buckets, so they
+    describe the requests that finished recently, not since start."""
+    from vllm_tui.derive import percentile
+
+    d = [(0.1, 2.0), (0.5, 6.0), (1.0, 9.0), (math.inf, 10.0)]
+    assert math.isclose(percentile(d, 50), 0.4)
+    assert math.isclose(percentile(d, 99), 1.0)  # lands in +Inf: last bound
+
+    def text(a, b, c, inf):
+        return "\n".join(
+            f'vllm:time_to_first_token_seconds_bucket{{le="{le}"}} {n}'
+            for le, n in (("0.1", a), ("0.5", b), ("1.0", c), ("+Inf", inf))
+        )
+
+    info = ServerInfo(model="m")
+    old = prom.parse(text(0, 0, 0, 0))
+    new = prom.parse(text(2, 6, 9, 10))
+    ident = identify(new, None, info)
+    d2 = Deriver()
+    old.t, new.t = 0.0, 30.0
+    d2.on_sample(old, ident, info)
+    d2.on_sample(new, ident, info)
+    v = d2.fill(View(), 30.0, 2.0, 0)
+    assert math.isclose(v.ttft_p50, 0.4) and math.isclose(v.ttft_p99, 1.0)
+    assert v.pct_n == 10 and math.isclose(v.pct_window_s, 30.0)
+
+
+def test_all_servers_page():
+    t = theme.resolve(theme.FALLBACK, "x", "x")
+    views = [
+        View(server="gpu-box", state=ServerState.BUSY, tg_live=251.6, kv_pct=9.3, running=2, max_batch=8),
+        View(server="dgx", state=ServerState.DOWN, status="refused · retry 9s"),
+        View(server="dgx-spark", state=ServerState.BUSY, tg_live=480.2, kv_pct=0.1, running=1, max_batch=32),
+    ]
+    ctx = Ctx(t, "11-10-26 1:00:00 PM", 1, [Strip(v.server, v.state, v.tg_live) for v in views])
+    for w, h in [(48, 20), (80, 24), (120, 30)]:
+        c = Canvas(w, h)
+        pages.all_servers(c, views, ctx)
+        dump = "\n".join("".join(r) for r in c.chars)
+        assert "All servers" in dump
+        for v in views:
+            assert v.server in dump
+        assert "DOWN" in dump and "TG" in dump
+        assert c.hit(5, 6) == "open:0"  # row click opens that server
+        c.render(t, True)
 
 
 def test_flare_overview_renders():

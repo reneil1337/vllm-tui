@@ -204,6 +204,7 @@ class Sim:
             f"{p}spec_decode_num_draft_tokens_total{lab} {c['draft']:.0f}",
             f"{p}spec_decode_num_accepted_tokens_total{lab} {c['accepted']:.0f}",
         ]
+        lines += self.latency_buckets(p)
         if self.engine == "vllm":
             used = sum(self.kv_tokens(r) for r in self.running)
             lines += [
@@ -243,6 +244,20 @@ class Sim:
                 lines.append(f'{p}stream_ttft_seconds{{stream="{i}"}} {ttft}')
                 lines.append(f'{p}stream_request_start_seconds{{stream="{i}"}} {r.arrived + 1.79e9 if r else 0:.3f}')
         return "\n".join(lines) + "\n"
+
+    def latency_buckets(self, p: str) -> list[str]:
+        """Cumulative TTFT / end-to-end latency buckets, so the percentiles
+        have something to read (the engines export these as histograms)."""
+        ttft = self.c["ttft_n"]
+        e2e = self.c["e2e_n"]
+        e2e_name = "e2e_request_latency_seconds_bucket" if p == "vllm:" else "request_latency_seconds_bucket"
+        out = []
+        for le, frac in ((0.05, 0.2), (0.1, 0.4), (0.25, 0.65), (0.5, 0.85), (1.0, 0.95), (2.0, 0.99), (5.0, 0.999)):
+            out.append(f'{p}time_to_first_token_seconds_bucket{{le="{le}"}} {ttft * frac:.0f}')
+            out.append(f'{p}{e2e_name}{{le="{le * 10 + 0.5}"}} {e2e * frac:.0f}')
+        out.append(f'{p}time_to_first_token_seconds_bucket{{le="+Inf"}} {ttft:.0f}')
+        out.append(f'{p}{e2e_name}{{le="+Inf"}} {e2e:.0f}')
+        return out
 
     def flare_lines(self) -> list[str]:
         c = self.c
