@@ -241,3 +241,19 @@ def test_flare_overview_renders():
     c = Canvas(110, 30)
     graphs(c, v, ctx)
     assert all(len(r) == 110 for r in c.chars)
+
+
+def test_error_reasons_follow_the_exception_chain():
+    """httpx hides the socket errno a few links down; the footer should still
+    say refused, not connect failed."""
+    import httpx
+
+    from vllm_tui.poller import describe
+
+    e = httpx.ConnectError("All connection attempts failed")
+    e.__cause__ = ConnectionRefusedError(111, "Connect call failed ('10.0.0.5', 8090)")
+    assert describe(e, "10.0.0.5") == "refused"
+    d = httpx.ConnectError("All connection attempts failed")
+    d.__cause__ = OSError("[Errno -2] Name or service not known")
+    assert describe(d, "gpu-box.lan") == "dns gpu-box.lan"
+    assert describe(httpx.ReadTimeout("timed out"), "x") == "timeout"

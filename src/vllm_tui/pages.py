@@ -587,7 +587,11 @@ def _srv_cols() -> list[Col]:
         Col(
             "run",
             8,
-            lambda v: f"{v.running:.0f}" if nan(v.max_batch) else f"{v.running:.0f}/{v.max_batch:.0f}",
+            lambda v: (
+                fmt.NO_DATA
+                if nan(v.running)
+                else (f"{v.running:.0f}" if nan(v.max_batch) else f"{v.running:.0f}/{v.max_batch:.0f}")
+            ),
             lambda v: vrole(v.running, "VALUE"),
         ),
         Col(
@@ -651,13 +655,16 @@ def all_servers(c: Canvas, views: list[View], ctx: Ctx) -> None:
         c.text(3, r, name, "TITLE" if sel else "VALUE", sel)
         c.text_right(state_end, r, v.state.value, STATE_ROLE[v.state], sel)
         for col in cols:
-            c.text_right(ends[col.label], r, col.width_of(v), "DIM" if stale else col.role(v))
+            text = col.width_of(v)
+            if text == fmt.NO_DATA:  # a table cell: short form, explained below
+                text = "–"
+            c.text_right(ends[col.label], r, text, "DIM" if stale else col.role(v))
         c.click(0, r, c.w, r + 1, f"open:{i}")
     if not views:
         c.text(2, y + 1, fmt.NO_DATA, "DIM")
     hint_row = y + 1 + len(views) + 1
     if hint_row < c.h - 2:
-        c.text(2, hint_row, "↑↓ select · enter: open · click a row", "DIM")
+        c.text(2, hint_row, "↑↓ select · enter: open · click a row · – = no data", "DIM")
     # Footer: totals across every server, so the page answers "how is the
     # whole box doing" at a glance.
     tgs = [v.tg_live for v in views if not nan(v.tg_live)]

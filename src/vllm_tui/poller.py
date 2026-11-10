@@ -55,26 +55,35 @@ def normalize_url(s: str) -> str:
     return s
 
 
+def _chain_text(exc: BaseException) -> str:
+    """Every message down the exception chain: httpx collapses multi-address
+    failures into "All connection attempts failed", and the errno lives a few
+    links further down."""
+    parts = []
+    seen = set()
+    while exc is not None and id(exc) not in seen:
+        seen.add(id(exc))
+        parts.append(str(exc))
+        for sub in getattr(exc, "exceptions", ()):  # ExceptionGroup
+            parts.append(_chain_text(sub))
+        exc = exc.__cause__ or exc.__context__
+    return " ".join(parts).lower()
+
+
 def describe(exc: Exception, host: str) -> str:
-    text = str(exc).lower()
+    """A short reason for the footer (SPEC.md §8): dns, refused, timeout, …"""
+    text = _chain_text(exc)
     if isinstance(exc, httpx.TimeoutException):
         return "timeout"
     if isinstance(exc, httpx.ConnectError):
-        if any(
-            k in text
-            for k in (
-                "name or service",
-                "nodename",
-                "name resolution",
-                "getaddrinfo",
-                "no address",
-            )
-        ):
+        if any(k in text for k in ("name or service", "nodename", "name resolution", "getaddrinfo", "no address")):
             return f"dns {host}"
-        if "refused" in text:
+        if "refused" in text or "errno 111" in text:
             return "refused"
-        if "unreachable" in text:
+        if "unreachable" in text or "errno 113" in text:
             return "unreachable"
+        if "timed out" in text or "errno 110" in text:
+            return "timeout"
         return "connect failed"
     if isinstance(exc, httpx.RemoteProtocolError):
         return "bad response"
