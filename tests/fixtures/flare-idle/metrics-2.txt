@@ -1,0 +1,773 @@
+# HELP flare_host_cache_held_total Records held because the next tier could not accept them.
+# TYPE flare_host_cache_held_total counter
+# HELP flare_host_cache_dropped_total Host records dropped at the local end or through oversize or I/O errors.
+# TYPE flare_host_cache_dropped_total counter
+# TYPE flare_host_cache_expired_total counter
+# HELP flare_host_cache_rows_thinned_total Rows eagerly dropped after a child commits.
+# TYPE flare_host_cache_rows_thinned_total counter
+# HELP flare_host_cache_packed_records_total Records stored with identical rank bytes packed once.
+# TYPE flare_host_cache_packed_records_total counter
+# HELP flare_host_cache_per_rank_records_total Records stored with separate rank bytes.
+# TYPE flare_host_cache_per_rank_records_total counter
+# HELP flare_host_cache_abandoned_stores_total Stores abandoned after later rank bytes differed.
+# TYPE flare_host_cache_abandoned_stores_total counter
+flare_host_cache_abandoned_stores_total 0
+flare_host_cache_packed_records_total{tier="dram"} 0
+flare_host_cache_per_rank_records_total{tier="dram"} 0
+flare_host_cache_rows_thinned_total{tier="dram"} 0
+flare_host_cache_expired_total{tier="dram"} 0
+flare_host_cache_held_total{tier="dram"} 0
+flare_host_cache_dropped_total{tier="dram",reason="end_of_chain"} 0
+flare_host_cache_dropped_total{tier="dram",reason="oversize"} 0
+flare_host_cache_dropped_total{tier="dram",reason="io_error"} 0
+flare_host_cache_packed_records_total{tier="nvme"} 0
+flare_host_cache_per_rank_records_total{tier="nvme"} 0
+flare_host_cache_rows_thinned_total{tier="nvme"} 0
+flare_host_cache_expired_total{tier="nvme"} 0
+flare_host_cache_held_total{tier="nvme"} 0
+flare_host_cache_dropped_total{tier="nvme",reason="end_of_chain"} 0
+flare_host_cache_dropped_total{tier="nvme",reason="oversize"} 0
+flare_host_cache_dropped_total{tier="nvme",reason="io_error"} 0
+# TYPE flare_host_cache_retry_abandoned_total counter
+flare_host_cache_retry_abandoned_total{reason="inflight"} 0
+flare_host_cache_retry_abandoned_total{reason="slabs"} 0
+flare_host_cache_retry_abandoned_total{reason="queue"} 0
+flare_host_cache_retry_abandoned_total{reason="budget"} 0
+flare_host_cache_retry_abandoned_total{reason="oversize"} 0
+flare_host_cache_retry_abandoned_total{reason="io_error"} 0
+# TYPE flare_host_cache_lookup_outcomes_total counter
+flare_host_cache_lookup_outcomes_total{reason="no_match"} 0
+flare_host_cache_lookup_outcomes_total{reason="cost_rejected"} 0
+flare_host_cache_lookup_outcomes_total{reason="capacity_rejected"} 0
+flare_host_cache_lookup_outcomes_total{reason="enqueue_rejected"} 0
+flare_host_cache_lookup_outcomes_total{reason="admitted"} 0
+# TYPE flare_host_cache_store_reasons_total counter
+flare_host_cache_store_reasons_total{reason="present"} 0
+flare_host_cache_store_reasons_total{reason="inflight"} 0
+flare_host_cache_store_reasons_total{reason="slabs"} 0
+flare_host_cache_store_reasons_total{reason="queue"} 0
+flare_host_cache_store_reasons_total{reason="budget"} 0
+flare_host_cache_store_reasons_total{reason="oversize"} 0
+# TYPE flare_host_cache_missing_tokens histogram
+flare_host_cache_missing_tokens_bucket{le="64"} 0
+flare_host_cache_missing_tokens_bucket{le="256"} 0
+flare_host_cache_missing_tokens_bucket{le="1024"} 0
+flare_host_cache_missing_tokens_bucket{le="4096"} 0
+flare_host_cache_missing_tokens_bucket{le="16384"} 0
+flare_host_cache_missing_tokens_bucket{le="65536"} 0
+flare_host_cache_missing_tokens_bucket{le="262144"} 0
+flare_host_cache_missing_tokens_bucket{le="+Inf"} 0
+flare_host_cache_missing_tokens_count 0
+flare_host_cache_missing_tokens_sum 0
+# TYPE flare_host_cache_estimated_transfer_ns histogram
+flare_host_cache_estimated_transfer_ns_bucket{le="100000"} 0
+flare_host_cache_estimated_transfer_ns_bucket{le="1000000"} 0
+flare_host_cache_estimated_transfer_ns_bucket{le="10000000"} 0
+flare_host_cache_estimated_transfer_ns_bucket{le="100000000"} 0
+flare_host_cache_estimated_transfer_ns_bucket{le="1000000000"} 0
+flare_host_cache_estimated_transfer_ns_bucket{le="10000000000"} 0
+flare_host_cache_estimated_transfer_ns_bucket{le="100000000000"} 0
+flare_host_cache_estimated_transfer_ns_bucket{le="+Inf"} 0
+flare_host_cache_estimated_transfer_ns_count 0
+flare_host_cache_estimated_transfer_ns_sum 0
+# TYPE flare_host_cache_estimated_prefill_ns histogram
+flare_host_cache_estimated_prefill_ns_bucket{le="100000"} 0
+flare_host_cache_estimated_prefill_ns_bucket{le="1000000"} 0
+flare_host_cache_estimated_prefill_ns_bucket{le="10000000"} 0
+flare_host_cache_estimated_prefill_ns_bucket{le="100000000"} 0
+flare_host_cache_estimated_prefill_ns_bucket{le="1000000000"} 0
+flare_host_cache_estimated_prefill_ns_bucket{le="10000000000"} 0
+flare_host_cache_estimated_prefill_ns_bucket{le="100000000000"} 0
+flare_host_cache_estimated_prefill_ns_bucket{le="+Inf"} 0
+flare_host_cache_estimated_prefill_ns_count 0
+flare_host_cache_estimated_prefill_ns_sum 0
+# HELP flare_scheduler_execution_nanoseconds_total Raw execution time by scheduler selection reason, including readiness stalls and isolated host handoff.
+# TYPE flare_scheduler_execution_nanoseconds_total counter
+flare_scheduler_execution_nanoseconds_total{reason="ordinary"} 13207751119394
+flare_scheduler_execution_nanoseconds_total{reason="discovery"} 1996023288
+flare_scheduler_execution_nanoseconds_total{reason="timing_refresh"} 22129855221
+flare_scheduler_execution_nanoseconds_total{reason="acceptance_learning"} 106516460028
+# HELP flare_scheduler_executions_total Completed physical executions by scheduler selection reason; each generation round counts once.
+# TYPE flare_scheduler_executions_total counter
+flare_scheduler_executions_total{reason="ordinary"} 1110456
+flare_scheduler_executions_total{reason="discovery"} 193
+flare_scheduler_executions_total{reason="timing_refresh"} 1262
+flare_scheduler_executions_total{reason="acceptance_learning"} 8449
+# HELP flare_replay_gpu_nanoseconds_total Sum of maximum rank-local CUDA durations of completed graphs, including readiness waits.
+# TYPE flare_replay_gpu_nanoseconds_total counter
+flare_replay_gpu_nanoseconds_total 13327604483431
+# HELP flare_replay_readiness_wait_nanoseconds_total Exposed embedding readiness delay measured across ranks; includes RAM and disk delivery.
+# TYPE flare_replay_readiness_wait_nanoseconds_total counter
+flare_replay_readiness_wait_nanoseconds_total 7620614592
+# HELP flare_replay_readiness_samples_total Completed graphs with prepared readiness timing outputs.
+# TYPE flare_replay_readiness_samples_total counter
+flare_replay_readiness_samples_total 1071742
+# HELP flare_history_drafts_enabled Shared decoded history augments learned proposals.
+# TYPE flare_history_drafts_enabled gauge
+flare_history_drafts_enabled 0
+# HELP flare_http_requests_total HTTP generation or token-count requests by API, before request validation.
+# TYPE flare_http_requests_total counter
+flare_http_requests_total{api="chat"} 11183
+flare_http_requests_total{api="completions"} 0
+flare_http_requests_total{api="messages"} 0
+flare_http_requests_total{api="responses"} 0
+flare_http_requests_total{api="count_tokens"} 0
+# HELP flare_engram_gathers_total Embedding row gathers, excluding the wait for GPU-produced IDs.
+# TYPE flare_engram_gathers_total counter
+flare_engram_gathers_total 2143484
+# HELP flare_engram_gather_nanoseconds_total Wall time inside embedding row gathers.
+# TYPE flare_engram_gather_nanoseconds_total counter
+flare_engram_gather_nanoseconds_total 75333342597
+# HELP flare_engram_row_cache_hits_total Cached row hits; duplicate IDs within one gather count once.
+# TYPE flare_engram_row_cache_hits_total counter
+flare_engram_row_cache_hits_total 0
+# HELP flare_engram_row_cache_misses_total Cached row misses; duplicate IDs within one gather count once.
+# TYPE flare_engram_row_cache_misses_total counter
+flare_engram_row_cache_misses_total 0
+# HELP flare_engram_row_cache_evictions_total Resident rows replaced by other row IDs.
+# TYPE flare_engram_row_cache_evictions_total counter
+flare_engram_row_cache_evictions_total 0
+# HELP flare_engram_row_cache_resident_rows Rows held in the embedding row cache.
+# TYPE flare_engram_row_cache_resident_rows gauge
+flare_engram_row_cache_resident_rows 0
+# HELP flare_engram_row_cache_capacity_rows Maximum rows held in the embedding row cache.
+# TYPE flare_engram_row_cache_capacity_rows gauge
+flare_engram_row_cache_capacity_rows 0
+# HELP flare_engram_row_cache_bytes Allocated embedding row payload, usage counters, index and bounded miss workspace bytes.
+# TYPE flare_engram_row_cache_bytes gauge
+flare_engram_row_cache_bytes 0
+# HELP flare_engram_resident_scale_bytes Resident scale-plane allocation bytes for disk-backed embedding tables, separate from the row cache.
+# TYPE flare_engram_resident_scale_bytes gauge
+flare_engram_resident_scale_bytes 0
+# HELP flare_engram_disk_reads_total Direct-I/O embedding read requests queued.
+# TYPE flare_engram_disk_reads_total counter
+flare_engram_disk_reads_total 0
+# HELP flare_engram_disk_bytes_total Bytes requested by direct-I/O embedding reads.
+# TYPE flare_engram_disk_bytes_total counter
+flare_engram_disk_bytes_total 0
+# HELP flare_engram_disk_plan_nanoseconds_total Wall time building, sorting and coalescing disk row reads.
+# TYPE flare_engram_disk_plan_nanoseconds_total counter
+flare_engram_disk_plan_nanoseconds_total 0
+# HELP flare_engram_disk_submit_nanoseconds_total Cumulative worker wall time preparing and issuing disk read batches; Linux kernel submission is included in wait time.
+# TYPE flare_engram_disk_submit_nanoseconds_total counter
+flare_engram_disk_submit_nanoseconds_total 0
+# HELP flare_engram_disk_wait_nanoseconds_total Cumulative worker wall time in disk completion waits, including Linux io_uring submission.
+# TYPE flare_engram_disk_wait_nanoseconds_total counter
+flare_engram_disk_wait_nanoseconds_total 0
+# HELP flare_engram_disk_complete_nanoseconds_total Cumulative worker wall time processing disk completions and copying rows, excluding completion waits.
+# TYPE flare_engram_disk_complete_nanoseconds_total counter
+flare_engram_disk_complete_nanoseconds_total 0
+# HELP flare_sampling_graph_launches_total Successful native submissions by captured sampler mode; includes consumption-only prefill.
+# TYPE flare_sampling_graph_launches_total counter
+flare_sampling_graph_launches_total{kind="prefill",mode="general"} 36472
+flare_sampling_graph_launches_total{kind="decode",mode="general"} 0
+flare_sampling_graph_launches_total{kind="resume",mode="general"} 1143
+flare_sampling_graph_launches_total{kind="speculative",mode="general"} 1035270
+flare_sampling_graph_launches_total{kind="mixed",mode="general"} 0
+# HELP flare_speculative_rounds_total Completed speculative generation programs, including terminal no-op rounds.
+# TYPE flare_speculative_rounds_total counter
+flare_speculative_rounds_total{batch="1",width="1"} 102
+flare_speculative_rounds_total{batch="1",width="2"} 0
+flare_speculative_rounds_total{batch="1",width="3"} 0
+flare_speculative_rounds_total{batch="1",width="4"} 0
+flare_speculative_rounds_total{batch="1",width="5"} 0
+flare_speculative_rounds_total{batch="1",width="6"} 0
+flare_speculative_rounds_total{batch="1",width="7"} 0
+flare_speculative_rounds_total{batch="1",width="8"} 715045
+flare_speculative_rounds_total{batch="2",width="1"} 25
+flare_speculative_rounds_total{batch="2",width="2"} 0
+flare_speculative_rounds_total{batch="2",width="3"} 0
+flare_speculative_rounds_total{batch="2",width="4"} 0
+flare_speculative_rounds_total{batch="2",width="5"} 0
+flare_speculative_rounds_total{batch="2",width="6"} 0
+flare_speculative_rounds_total{batch="2",width="7"} 0
+flare_speculative_rounds_total{batch="2",width="8"} 110418
+flare_speculative_rounds_total{batch="4",width="1"} 25
+flare_speculative_rounds_total{batch="4",width="2"} 0
+flare_speculative_rounds_total{batch="4",width="3"} 0
+flare_speculative_rounds_total{batch="4",width="4"} 0
+flare_speculative_rounds_total{batch="4",width="5"} 0
+flare_speculative_rounds_total{batch="4",width="6"} 0
+flare_speculative_rounds_total{batch="4",width="7"} 0
+flare_speculative_rounds_total{batch="4",width="8"} 82558
+flare_speculative_rounds_total{batch="8",width="1"} 28
+flare_speculative_rounds_total{batch="8",width="2"} 0
+flare_speculative_rounds_total{batch="8",width="3"} 0
+flare_speculative_rounds_total{batch="8",width="4"} 0
+flare_speculative_rounds_total{batch="8",width="5"} 0
+flare_speculative_rounds_total{batch="8",width="6"} 0
+flare_speculative_rounds_total{batch="8",width="7"} 0
+flare_speculative_rounds_total{batch="8",width="8"} 68814
+flare_speculative_rounds_total{batch="16",width="1"} 36
+flare_speculative_rounds_total{batch="16",width="2"} 0
+flare_speculative_rounds_total{batch="16",width="3"} 0
+flare_speculative_rounds_total{batch="16",width="4"} 0
+flare_speculative_rounds_total{batch="16",width="5"} 0
+flare_speculative_rounds_total{batch="16",width="6"} 0
+flare_speculative_rounds_total{batch="16",width="7"} 0
+flare_speculative_rounds_total{batch="16",width="8"} 45633
+flare_speculative_rounds_total{batch="32",width="1"} 441
+flare_speculative_rounds_total{batch="32",width="2"} 0
+flare_speculative_rounds_total{batch="32",width="3"} 0
+flare_speculative_rounds_total{batch="32",width="4"} 0
+flare_speculative_rounds_total{batch="32",width="5"} 0
+flare_speculative_rounds_total{batch="32",width="6"} 0
+flare_speculative_rounds_total{batch="32",width="7"} 0
+flare_speculative_rounds_total{batch="32",width="8"} 12145
+flare_speculative_rounds_total{batch="64",width="1"} 0
+flare_speculative_rounds_total{batch="64",width="2"} 0
+flare_speculative_rounds_total{batch="64",width="3"} 0
+flare_speculative_rounds_total{batch="64",width="4"} 0
+flare_speculative_rounds_total{batch="64",width="5"} 0
+flare_speculative_rounds_total{batch="64",width="6"} 0
+flare_speculative_rounds_total{batch="64",width="7"} 0
+flare_speculative_rounds_total{batch="64",width="8"} 0
+# HELP flare_speculative_gpu_nanoseconds_total CUDA event duration of complete speculative generation programs, including proposal and verification work; excludes transport.
+# TYPE flare_speculative_gpu_nanoseconds_total counter
+flare_speculative_gpu_nanoseconds_total{batch="1",width="1"} 600465376
+flare_speculative_gpu_nanoseconds_total{batch="1",width="2"} 0
+flare_speculative_gpu_nanoseconds_total{batch="1",width="3"} 0
+flare_speculative_gpu_nanoseconds_total{batch="1",width="4"} 0
+flare_speculative_gpu_nanoseconds_total{batch="1",width="5"} 0
+flare_speculative_gpu_nanoseconds_total{batch="1",width="6"} 0
+flare_speculative_gpu_nanoseconds_total{batch="1",width="7"} 0
+flare_speculative_gpu_nanoseconds_total{batch="1",width="8"} 6328166020032
+flare_speculative_gpu_nanoseconds_total{batch="2",width="1"} 163209984
+flare_speculative_gpu_nanoseconds_total{batch="2",width="2"} 0
+flare_speculative_gpu_nanoseconds_total{batch="2",width="3"} 0
+flare_speculative_gpu_nanoseconds_total{batch="2",width="4"} 0
+flare_speculative_gpu_nanoseconds_total{batch="2",width="5"} 0
+flare_speculative_gpu_nanoseconds_total{batch="2",width="6"} 0
+flare_speculative_gpu_nanoseconds_total{batch="2",width="7"} 0
+flare_speculative_gpu_nanoseconds_total{batch="2",width="8"} 1284127473056
+flare_speculative_gpu_nanoseconds_total{batch="4",width="1"} 183875040
+flare_speculative_gpu_nanoseconds_total{batch="4",width="2"} 0
+flare_speculative_gpu_nanoseconds_total{batch="4",width="3"} 0
+flare_speculative_gpu_nanoseconds_total{batch="4",width="4"} 0
+flare_speculative_gpu_nanoseconds_total{batch="4",width="5"} 0
+flare_speculative_gpu_nanoseconds_total{batch="4",width="6"} 0
+flare_speculative_gpu_nanoseconds_total{batch="4",width="7"} 0
+flare_speculative_gpu_nanoseconds_total{batch="4",width="8"} 1211242781608
+flare_speculative_gpu_nanoseconds_total{batch="8",width="1"} 243163456
+flare_speculative_gpu_nanoseconds_total{batch="8",width="2"} 0
+flare_speculative_gpu_nanoseconds_total{batch="8",width="3"} 0
+flare_speculative_gpu_nanoseconds_total{batch="8",width="4"} 0
+flare_speculative_gpu_nanoseconds_total{batch="8",width="5"} 0
+flare_speculative_gpu_nanoseconds_total{batch="8",width="6"} 0
+flare_speculative_gpu_nanoseconds_total{batch="8",width="7"} 0
+flare_speculative_gpu_nanoseconds_total{batch="8",width="8"} 1131238142274
+flare_speculative_gpu_nanoseconds_total{batch="16",width="1"} 392738464
+flare_speculative_gpu_nanoseconds_total{batch="16",width="2"} 0
+flare_speculative_gpu_nanoseconds_total{batch="16",width="3"} 0
+flare_speculative_gpu_nanoseconds_total{batch="16",width="4"} 0
+flare_speculative_gpu_nanoseconds_total{batch="16",width="5"} 0
+flare_speculative_gpu_nanoseconds_total{batch="16",width="6"} 0
+flare_speculative_gpu_nanoseconds_total{batch="16",width="7"} 0
+flare_speculative_gpu_nanoseconds_total{batch="16",width="8"} 1048982387346
+flare_speculative_gpu_nanoseconds_total{batch="32",width="1"} 7196804537
+flare_speculative_gpu_nanoseconds_total{batch="32",width="2"} 0
+flare_speculative_gpu_nanoseconds_total{batch="32",width="3"} 0
+flare_speculative_gpu_nanoseconds_total{batch="32",width="4"} 0
+flare_speculative_gpu_nanoseconds_total{batch="32",width="5"} 0
+flare_speculative_gpu_nanoseconds_total{batch="32",width="6"} 0
+flare_speculative_gpu_nanoseconds_total{batch="32",width="7"} 0
+flare_speculative_gpu_nanoseconds_total{batch="32",width="8"} 418293788126
+flare_speculative_gpu_nanoseconds_total{batch="64",width="1"} 0
+flare_speculative_gpu_nanoseconds_total{batch="64",width="2"} 0
+flare_speculative_gpu_nanoseconds_total{batch="64",width="3"} 0
+flare_speculative_gpu_nanoseconds_total{batch="64",width="4"} 0
+flare_speculative_gpu_nanoseconds_total{batch="64",width="5"} 0
+flare_speculative_gpu_nanoseconds_total{batch="64",width="6"} 0
+flare_speculative_gpu_nanoseconds_total{batch="64",width="7"} 0
+flare_speculative_gpu_nanoseconds_total{batch="64",width="8"} 0
+# HELP flare_speculative_emitted_tokens_total Raw emitted tokens in completed speculative records, including lanes cancelled after submission.
+# TYPE flare_speculative_emitted_tokens_total counter
+flare_speculative_emitted_tokens_total{batch="1",width="1"} 102
+flare_speculative_emitted_tokens_total{batch="1",width="2"} 0
+flare_speculative_emitted_tokens_total{batch="1",width="3"} 0
+flare_speculative_emitted_tokens_total{batch="1",width="4"} 0
+flare_speculative_emitted_tokens_total{batch="1",width="5"} 0
+flare_speculative_emitted_tokens_total{batch="1",width="6"} 0
+flare_speculative_emitted_tokens_total{batch="1",width="7"} 0
+flare_speculative_emitted_tokens_total{batch="1",width="8"} 2641805
+flare_speculative_emitted_tokens_total{batch="2",width="1"} 39
+flare_speculative_emitted_tokens_total{batch="2",width="2"} 0
+flare_speculative_emitted_tokens_total{batch="2",width="3"} 0
+flare_speculative_emitted_tokens_total{batch="2",width="4"} 0
+flare_speculative_emitted_tokens_total{batch="2",width="5"} 0
+flare_speculative_emitted_tokens_total{batch="2",width="6"} 0
+flare_speculative_emitted_tokens_total{batch="2",width="7"} 0
+flare_speculative_emitted_tokens_total{batch="2",width="8"} 832902
+flare_speculative_emitted_tokens_total{batch="4",width="1"} 63
+flare_speculative_emitted_tokens_total{batch="4",width="2"} 0
+flare_speculative_emitted_tokens_total{batch="4",width="3"} 0
+flare_speculative_emitted_tokens_total{batch="4",width="4"} 0
+flare_speculative_emitted_tokens_total{batch="4",width="5"} 0
+flare_speculative_emitted_tokens_total{batch="4",width="6"} 0
+flare_speculative_emitted_tokens_total{batch="4",width="7"} 0
+flare_speculative_emitted_tokens_total{batch="4",width="8"} 1066182
+flare_speculative_emitted_tokens_total{batch="8",width="1"} 119
+flare_speculative_emitted_tokens_total{batch="8",width="2"} 0
+flare_speculative_emitted_tokens_total{batch="8",width="3"} 0
+flare_speculative_emitted_tokens_total{batch="8",width="4"} 0
+flare_speculative_emitted_tokens_total{batch="8",width="5"} 0
+flare_speculative_emitted_tokens_total{batch="8",width="6"} 0
+flare_speculative_emitted_tokens_total{batch="8",width="7"} 0
+flare_speculative_emitted_tokens_total{batch="8",width="8"} 1197079
+flare_speculative_emitted_tokens_total{batch="16",width="1"} 288
+flare_speculative_emitted_tokens_total{batch="16",width="2"} 0
+flare_speculative_emitted_tokens_total{batch="16",width="3"} 0
+flare_speculative_emitted_tokens_total{batch="16",width="4"} 0
+flare_speculative_emitted_tokens_total{batch="16",width="5"} 0
+flare_speculative_emitted_tokens_total{batch="16",width="6"} 0
+flare_speculative_emitted_tokens_total{batch="16",width="7"} 0
+flare_speculative_emitted_tokens_total{batch="16",width="8"} 1505842
+flare_speculative_emitted_tokens_total{batch="32",width="1"} 13513
+flare_speculative_emitted_tokens_total{batch="32",width="2"} 0
+flare_speculative_emitted_tokens_total{batch="32",width="3"} 0
+flare_speculative_emitted_tokens_total{batch="32",width="4"} 0
+flare_speculative_emitted_tokens_total{batch="32",width="5"} 0
+flare_speculative_emitted_tokens_total{batch="32",width="6"} 0
+flare_speculative_emitted_tokens_total{batch="32",width="7"} 0
+flare_speculative_emitted_tokens_total{batch="32",width="8"} 828052
+flare_speculative_emitted_tokens_total{batch="64",width="1"} 0
+flare_speculative_emitted_tokens_total{batch="64",width="2"} 0
+flare_speculative_emitted_tokens_total{batch="64",width="3"} 0
+flare_speculative_emitted_tokens_total{batch="64",width="4"} 0
+flare_speculative_emitted_tokens_total{batch="64",width="5"} 0
+flare_speculative_emitted_tokens_total{batch="64",width="6"} 0
+flare_speculative_emitted_tokens_total{batch="64",width="7"} 0
+flare_speculative_emitted_tokens_total{batch="64",width="8"} 0
+# HELP flare_speculative_offered_drafts_total Drafts offered in completed speculative records.
+# TYPE flare_speculative_offered_drafts_total counter
+flare_speculative_offered_drafts_total{batch="1",width="1"} 0
+flare_speculative_offered_drafts_total{batch="1",width="2"} 0
+flare_speculative_offered_drafts_total{batch="1",width="3"} 0
+flare_speculative_offered_drafts_total{batch="1",width="4"} 0
+flare_speculative_offered_drafts_total{batch="1",width="5"} 0
+flare_speculative_offered_drafts_total{batch="1",width="6"} 0
+flare_speculative_offered_drafts_total{batch="1",width="7"} 0
+flare_speculative_offered_drafts_total{batch="1",width="8"} 3598779
+flare_speculative_offered_drafts_total{batch="2",width="1"} 0
+flare_speculative_offered_drafts_total{batch="2",width="2"} 0
+flare_speculative_offered_drafts_total{batch="2",width="3"} 0
+flare_speculative_offered_drafts_total{batch="2",width="4"} 0
+flare_speculative_offered_drafts_total{batch="2",width="5"} 0
+flare_speculative_offered_drafts_total{batch="2",width="6"} 0
+flare_speculative_offered_drafts_total{batch="2",width="7"} 0
+flare_speculative_offered_drafts_total{batch="2",width="8"} 957220
+flare_speculative_offered_drafts_total{batch="4",width="1"} 0
+flare_speculative_offered_drafts_total{batch="4",width="2"} 0
+flare_speculative_offered_drafts_total{batch="4",width="3"} 0
+flare_speculative_offered_drafts_total{batch="4",width="4"} 0
+flare_speculative_offered_drafts_total{batch="4",width="5"} 0
+flare_speculative_offered_drafts_total{batch="4",width="6"} 0
+flare_speculative_offered_drafts_total{batch="4",width="7"} 0
+flare_speculative_offered_drafts_total{batch="4",width="8"} 1112259
+flare_speculative_offered_drafts_total{batch="8",width="1"} 0
+flare_speculative_offered_drafts_total{batch="8",width="2"} 0
+flare_speculative_offered_drafts_total{batch="8",width="3"} 0
+flare_speculative_offered_drafts_total{batch="8",width="4"} 0
+flare_speculative_offered_drafts_total{batch="8",width="5"} 0
+flare_speculative_offered_drafts_total{batch="8",width="6"} 0
+flare_speculative_offered_drafts_total{batch="8",width="7"} 0
+flare_speculative_offered_drafts_total{batch="8",width="8"} 1022767
+flare_speculative_offered_drafts_total{batch="16",width="1"} 0
+flare_speculative_offered_drafts_total{batch="16",width="2"} 0
+flare_speculative_offered_drafts_total{batch="16",width="3"} 0
+flare_speculative_offered_drafts_total{batch="16",width="4"} 0
+flare_speculative_offered_drafts_total{batch="16",width="5"} 0
+flare_speculative_offered_drafts_total{batch="16",width="6"} 0
+flare_speculative_offered_drafts_total{batch="16",width="7"} 0
+flare_speculative_offered_drafts_total{batch="16",width="8"} 1370350
+flare_speculative_offered_drafts_total{batch="32",width="1"} 0
+flare_speculative_offered_drafts_total{batch="32",width="2"} 0
+flare_speculative_offered_drafts_total{batch="32",width="3"} 0
+flare_speculative_offered_drafts_total{batch="32",width="4"} 0
+flare_speculative_offered_drafts_total{batch="32",width="5"} 0
+flare_speculative_offered_drafts_total{batch="32",width="6"} 0
+flare_speculative_offered_drafts_total{batch="32",width="7"} 0
+flare_speculative_offered_drafts_total{batch="32",width="8"} 785833
+flare_speculative_offered_drafts_total{batch="64",width="1"} 0
+flare_speculative_offered_drafts_total{batch="64",width="2"} 0
+flare_speculative_offered_drafts_total{batch="64",width="3"} 0
+flare_speculative_offered_drafts_total{batch="64",width="4"} 0
+flare_speculative_offered_drafts_total{batch="64",width="5"} 0
+flare_speculative_offered_drafts_total{batch="64",width="6"} 0
+flare_speculative_offered_drafts_total{batch="64",width="7"} 0
+flare_speculative_offered_drafts_total{batch="64",width="8"} 0
+# HELP flare_speculative_accepted_drafts_total Accepted draft tokens after EOS and output-budget clipping.
+# TYPE flare_speculative_accepted_drafts_total counter
+flare_speculative_accepted_drafts_total{batch="1",width="1"} 0
+flare_speculative_accepted_drafts_total{batch="1",width="2"} 0
+flare_speculative_accepted_drafts_total{batch="1",width="3"} 0
+flare_speculative_accepted_drafts_total{batch="1",width="4"} 0
+flare_speculative_accepted_drafts_total{batch="1",width="5"} 0
+flare_speculative_accepted_drafts_total{batch="1",width="6"} 0
+flare_speculative_accepted_drafts_total{batch="1",width="7"} 0
+flare_speculative_accepted_drafts_total{batch="1",width="8"} 1934118
+flare_speculative_accepted_drafts_total{batch="2",width="1"} 0
+flare_speculative_accepted_drafts_total{batch="2",width="2"} 0
+flare_speculative_accepted_drafts_total{batch="2",width="3"} 0
+flare_speculative_accepted_drafts_total{batch="2",width="4"} 0
+flare_speculative_accepted_drafts_total{batch="2",width="5"} 0
+flare_speculative_accepted_drafts_total{batch="2",width="6"} 0
+flare_speculative_accepted_drafts_total{batch="2",width="7"} 0
+flare_speculative_accepted_drafts_total{batch="2",width="8"} 614818
+flare_speculative_accepted_drafts_total{batch="4",width="1"} 0
+flare_speculative_accepted_drafts_total{batch="4",width="2"} 0
+flare_speculative_accepted_drafts_total{batch="4",width="3"} 0
+flare_speculative_accepted_drafts_total{batch="4",width="4"} 0
+flare_speculative_accepted_drafts_total{batch="4",width="5"} 0
+flare_speculative_accepted_drafts_total{batch="4",width="6"} 0
+flare_speculative_accepted_drafts_total{batch="4",width="7"} 0
+flare_speculative_accepted_drafts_total{batch="4",width="8"} 786233
+flare_speculative_accepted_drafts_total{batch="8",width="1"} 0
+flare_speculative_accepted_drafts_total{batch="8",width="2"} 0
+flare_speculative_accepted_drafts_total{batch="8",width="3"} 0
+flare_speculative_accepted_drafts_total{batch="8",width="4"} 0
+flare_speculative_accepted_drafts_total{batch="8",width="5"} 0
+flare_speculative_accepted_drafts_total{batch="8",width="6"} 0
+flare_speculative_accepted_drafts_total{batch="8",width="7"} 0
+flare_speculative_accepted_drafts_total{batch="8",width="8"} 690012
+flare_speculative_accepted_drafts_total{batch="16",width="1"} 0
+flare_speculative_accepted_drafts_total{batch="16",width="2"} 0
+flare_speculative_accepted_drafts_total{batch="16",width="3"} 0
+flare_speculative_accepted_drafts_total{batch="16",width="4"} 0
+flare_speculative_accepted_drafts_total{batch="16",width="5"} 0
+flare_speculative_accepted_drafts_total{batch="16",width="6"} 0
+flare_speculative_accepted_drafts_total{batch="16",width="7"} 0
+flare_speculative_accepted_drafts_total{batch="16",width="8"} 852116
+flare_speculative_accepted_drafts_total{batch="32",width="1"} 0
+flare_speculative_accepted_drafts_total{batch="32",width="2"} 0
+flare_speculative_accepted_drafts_total{batch="32",width="3"} 0
+flare_speculative_accepted_drafts_total{batch="32",width="4"} 0
+flare_speculative_accepted_drafts_total{batch="32",width="5"} 0
+flare_speculative_accepted_drafts_total{batch="32",width="6"} 0
+flare_speculative_accepted_drafts_total{batch="32",width="7"} 0
+flare_speculative_accepted_drafts_total{batch="32",width="8"} 449510
+flare_speculative_accepted_drafts_total{batch="64",width="1"} 0
+flare_speculative_accepted_drafts_total{batch="64",width="2"} 0
+flare_speculative_accepted_drafts_total{batch="64",width="3"} 0
+flare_speculative_accepted_drafts_total{batch="64",width="4"} 0
+flare_speculative_accepted_drafts_total{batch="64",width="5"} 0
+flare_speculative_accepted_drafts_total{batch="64",width="6"} 0
+flare_speculative_accepted_drafts_total{batch="64",width="7"} 0
+flare_speculative_accepted_drafts_total{batch="64",width="8"} 0
+# HELP flare_speculative_drafts_total Draft outcomes by one-based depth and actual proposal source; accepted counts are clipped at EOS/output budget.
+# TYPE flare_speculative_drafts_total counter
+flare_speculative_drafts_total{depth="1",source="mtp",outcome="offered"} 2614836
+flare_speculative_drafts_total{depth="1",source="mtp",outcome="accepted"} 2011588
+flare_speculative_drafts_total{depth="1",source="copy",outcome="offered"} 0
+flare_speculative_drafts_total{depth="1",source="copy",outcome="accepted"} 0
+flare_speculative_drafts_total{depth="2",source="mtp",outcome="offered"} 2089421
+flare_speculative_drafts_total{depth="2",source="mtp",outcome="accepted"} 1304146
+flare_speculative_drafts_total{depth="2",source="copy",outcome="offered"} 0
+flare_speculative_drafts_total{depth="2",source="copy",outcome="accepted"} 0
+flare_speculative_drafts_total{depth="3",source="mtp",outcome="offered"} 1516469
+flare_speculative_drafts_total{depth="3",source="mtp",outcome="accepted"} 815491
+flare_speculative_drafts_total{depth="3",source="copy",outcome="offered"} 0
+flare_speculative_drafts_total{depth="3",source="copy",outcome="accepted"} 0
+flare_speculative_drafts_total{depth="4",source="mtp",outcome="offered"} 1048453
+flare_speculative_drafts_total{depth="4",source="mtp",outcome="accepted"} 516769
+flare_speculative_drafts_total{depth="4",source="copy",outcome="offered"} 0
+flare_speculative_drafts_total{depth="4",source="copy",outcome="accepted"} 0
+flare_speculative_drafts_total{depth="5",source="mtp",outcome="offered"} 675332
+flare_speculative_drafts_total{depth="5",source="mtp",outcome="accepted"} 330889
+flare_speculative_drafts_total{depth="5",source="copy",outcome="offered"} 0
+flare_speculative_drafts_total{depth="5",source="copy",outcome="accepted"} 0
+flare_speculative_drafts_total{depth="6",source="mtp",outcome="offered"} 481335
+flare_speculative_drafts_total{depth="6",source="mtp",outcome="accepted"} 211296
+flare_speculative_drafts_total{depth="6",source="copy",outcome="offered"} 0
+flare_speculative_drafts_total{depth="6",source="copy",outcome="accepted"} 0
+flare_speculative_drafts_total{depth="7",source="mtp",outcome="offered"} 421362
+flare_speculative_drafts_total{depth="7",source="mtp",outcome="accepted"} 136628
+flare_speculative_drafts_total{depth="7",source="copy",outcome="offered"} 0
+flare_speculative_drafts_total{depth="7",source="copy",outcome="accepted"} 0
+# HELP flare_prefill_tokens_total Prompt tokens consumed by successful completed prefill work, excluding padding and prefix reuse.
+# TYPE flare_prefill_tokens_total counter
+flare_prefill_tokens_total 19907465
+# HELP flare_generated_tokens_total Committed generated tokens, including host-forced tokens, EOS and tokens subsequently withheld by text stops.
+# TYPE flare_generated_tokens_total counter
+flare_generated_tokens_total 8093194
+# HELP flare_accepted_draft_tokens_total Accepted draft tokens from progressing live request rounds, excluding the bonus token.
+# TYPE flare_accepted_draft_tokens_total counter
+flare_accepted_draft_tokens_total 5324656
+# HELP flare_draft_request_rounds_total Progressing live request rounds offering at least one draft; denominator for mean acceptance length.
+# TYPE flare_draft_request_rounds_total counter
+flare_draft_request_rounds_total 2613109
+# HELP flare_verification_draft_tokens_total Draft positions allocated for progressing live request rounds, including rejected drafts and excluding padding.
+# TYPE flare_verification_draft_tokens_total counter
+flare_verification_draft_tokens_total 8843581
+# HELP flare_verification_request_rounds_total Progressing live decode or verification request rounds, including zero-draft rounds; denominator for mean planned verification depth.
+# TYPE flare_verification_request_rounds_total counter
+flare_verification_request_rounds_total 2764646
+# HELP flare_requests_admitted_total Requests admitted into a physical model slot.
+# TYPE flare_requests_admitted_total counter
+flare_requests_admitted_total 11183
+# HELP flare_requests_completed_total Requests whose model generation completed successfully, including explicit token stops.
+# TYPE flare_requests_completed_total counter
+flare_requests_completed_total 10256
+# HELP flare_reasoning_budget_cuts_total Requests whose reasoning was closed by their hard token budget.
+# TYPE flare_reasoning_budget_cuts_total counter
+flare_reasoning_budget_cuts_total 0
+# HELP flare_requests_cancelled_total Queued or active model requests cancelled before completion.
+# TYPE flare_requests_cancelled_total counter
+flare_requests_cancelled_total 927
+# HELP flare_requests_failed_total Model requests failed by admission, execution, grammar, or output processing.
+# TYPE flare_requests_failed_total counter
+flare_requests_failed_total 0
+# HELP flare_mixed_grammar_decode_steps_total Successful decode submissions containing both grammar-constrained and unconstrained request lanes.
+# TYPE flare_mixed_grammar_decode_steps_total counter
+flare_mixed_grammar_decode_steps_total 0
+# HELP flare_cache_lookups_total Prefix lookups during model admission, including admissions rejected for resource pressure.
+# TYPE flare_cache_lookups_total counter
+flare_cache_lookups_total 11183
+# HELP flare_cache_hits_total Prefix lookups returning a GPU-ready checkpoint.
+# TYPE flare_cache_hits_total counter
+flare_cache_hits_total 11182
+# HELP flare_cache_reused_tokens_total Tokens covered by checkpoints returned from prefix lookups.
+# TYPE flare_cache_reused_tokens_total counter
+flare_cache_reused_tokens_total 1714597669
+# HELP flare_snapshot_publications_total Unique checkpoints made visible after completed GPU writes.
+# TYPE flare_snapshot_publications_total counter
+flare_snapshot_publications_total 37741
+# HELP flare_message_checkpoints_total Exact rendered message endpoints retained after completed snapshot copies.
+# TYPE flare_message_checkpoints_total counter
+flare_message_checkpoints_total 18526
+# HELP flare_prompt_checkpoints_total Exact prompt endpoints retained after completed snapshot copies.
+# TYPE flare_prompt_checkpoints_total counter
+flare_prompt_checkpoints_total 9047
+# HELP flare_snapshot_evictions_total Checkpoints logically evicted; GPU retirement may still be pending.
+# TYPE flare_snapshot_evictions_total counter
+flare_snapshot_evictions_total 37279
+# HELP flare_preemptions_total Requests that yielded their KV pages under pressure and were readmitted.
+# TYPE flare_preemptions_total counter
+flare_preemptions_total 0
+# HELP flare_host_cache_lookups_total Host prefix store lookups above the GPU checkpoint during admission.
+# TYPE flare_host_cache_lookups_total counter
+flare_host_cache_lookups_total 0
+# HELP flare_host_cache_hits_total Host prefix store lookups whose chain the admission fetched.
+# TYPE flare_host_cache_hits_total counter
+flare_host_cache_hits_total 0
+# HELP flare_host_cache_reused_tokens_total Tokens covered by host prefix store chains beyond the GPU checkpoint.
+# TYPE flare_host_cache_reused_tokens_total counter
+flare_host_cache_reused_tokens_total 0
+# HELP flare_host_cache_row_refills_total Compacted endpoints restored by complete record replacement.
+# TYPE flare_host_cache_row_refills_total counter
+flare_host_cache_row_refills_total 0
+# HELP flare_host_cache_retry_success_total Deferred publications admitted or found present after resource progress.
+# TYPE flare_host_cache_retry_success_total counter
+flare_host_cache_retry_success_total 0
+# HELP flare_host_cache_stored_total Published checkpoints whose copy to the host store completed.
+# TYPE flare_host_cache_stored_total counter
+flare_host_cache_stored_total 0
+# HELP flare_host_cache_store_skipped_total Published checkpoints the host store did not copy: already present, in flight, or no free slabs.
+# TYPE flare_host_cache_store_skipped_total counter
+flare_host_cache_store_skipped_total 0
+# HELP flare_host_cache_store_failed_total Host store copy-outs that failed after draining their transfers.
+# TYPE flare_host_cache_store_failed_total counter
+flare_host_cache_store_failed_total 0
+# HELP flare_host_cache_fetched_total Host store chains restored into GPU pages and rows.
+# TYPE flare_host_cache_fetched_total counter
+flare_host_cache_fetched_total 0
+# HELP flare_host_cache_fetch_failed_total Host store restores that failed; their requests were re-admitted without the host store.
+# TYPE flare_host_cache_fetch_failed_total counter
+flare_host_cache_fetch_failed_total 0
+# HELP flare_host_cache_bytes_out_total Bytes copied from GPU checkpoints to the host store.
+# TYPE flare_host_cache_bytes_out_total counter
+flare_host_cache_bytes_out_total 0
+# HELP flare_host_cache_bytes_in_total Bytes copied from the host store into GPU pages and rows.
+# TYPE flare_host_cache_bytes_in_total counter
+flare_host_cache_bytes_in_total 0
+# HELP flare_cache_misses_total Prefix lookups without a GPU-ready checkpoint.
+# TYPE flare_cache_misses_total counter
+flare_cache_misses_total 1
+# HELP flare_graph_launches_total Successful native CUDA graph submissions.
+# TYPE flare_graph_launches_total counter
+flare_graph_launches_total{kind="init"} 1
+flare_graph_launches_total{kind="restore"} 9967
+flare_graph_launches_total{kind="resume"} 1143
+flare_graph_launches_total{kind="prefill"} 36472
+flare_graph_launches_total{kind="decode"} 0
+flare_graph_launches_total{kind="vision"} 185
+flare_graph_launches_total{kind="snapshot"} 37322
+flare_graph_launches_total{kind="speculative"} 1035270
+flare_graph_launches_total{kind="mixed"} 0
+# HELP flare_constrained_max_inflight Maximum outstanding executor frames immediately after a successful grammar-constrained graph submission; zero until the first such submission.
+# TYPE flare_constrained_max_inflight gauge
+flare_constrained_max_inflight 0
+# HELP flare_active_requests Physical model slots with a live request.
+# TYPE flare_active_requests gauge
+flare_active_requests 0
+# HELP flare_free_request_slots Request slots available for admission.
+# TYPE flare_free_request_slots gauge
+flare_free_request_slots 32
+# HELP flare_retiring_request_slots Cancelled slots waiting for GPU completion.
+# TYPE flare_retiring_request_slots gauge
+flare_retiring_request_slots 0
+# HELP flare_free_kv_pages KV pages reusable after completed GPU fences.
+# TYPE flare_free_kv_pages gauge
+flare_free_kv_pages 17
+# HELP flare_snapshot_capacity Prepared snapshot slot capacity.
+# TYPE flare_snapshot_capacity gauge
+flare_snapshot_capacity 1990
+# HELP flare_free_snapshots Unowned snapshot slots; shared backing may be held by KV pages.
+# TYPE flare_free_snapshots gauge
+flare_free_snapshots 1528
+# HELP flare_snapshot_backing_pages KV page ids excluded by owned snapshots, including pending GPU retirement.
+# TYPE flare_snapshot_backing_pages gauge
+flare_snapshot_backing_pages 48871
+# HELP flare_cached_checkpoints GPU-ready immutable checkpoints.
+# TYPE flare_cached_checkpoints gauge
+flare_cached_checkpoints 462
+# HELP flare_cached_kv_pages Pages owned by immutable checkpoints.
+# TYPE flare_cached_kv_pages gauge
+flare_cached_kv_pages 115407
+# HELP flare_pending_requests Requests waiting inside the model scheduler, excluding its ingress channel.
+# TYPE flare_pending_requests gauge
+flare_pending_requests 0
+# HELP flare_host_cache_outbound_in_flight Host store copy-outs in progress.
+# TYPE flare_host_cache_outbound_in_flight gauge
+flare_host_cache_outbound_in_flight 0
+# HELP flare_host_cache_parked_records Complete DRAM records waiting for a disk write.
+# TYPE flare_host_cache_parked_records gauge
+flare_host_cache_parked_records 0
+# HELP flare_host_cache_inbound_in_flight Host store restores in progress.
+# TYPE flare_host_cache_inbound_in_flight gauge
+flare_host_cache_inbound_in_flight 0
+# HELP flare_host_cache_inbound_waiting Admitted requests waiting for a host store restore.
+# TYPE flare_host_cache_inbound_waiting gauge
+flare_host_cache_inbound_waiting 0
+# HELP flare_host_cache_slots_in_use Allocated host checkpoint and intake slots.
+# TYPE flare_host_cache_slots_in_use gauge
+flare_host_cache_slots_in_use 0
+# HELP flare_host_cache_slots_total Host checkpoint slot capacity, including intake.
+# TYPE flare_host_cache_slots_total gauge
+flare_host_cache_slots_total 0
+# HELP flare_host_cache_intake_slots Slots reserved for automatic host checkpoint intake.
+# TYPE flare_host_cache_intake_slots gauge
+flare_host_cache_intake_slots 0
+# HELP flare_host_cache_memory_records Checkpoint records resident in the host store's registered memory.
+# TYPE flare_host_cache_memory_records gauge
+flare_host_cache_memory_records 0
+# HELP flare_host_cache_memory_bytes Bytes of records resident in the host store's registered memory.
+# TYPE flare_host_cache_memory_bytes gauge
+flare_host_cache_memory_bytes 0
+# HELP flare_host_cache_disk_records Checkpoint records in the host store's record directory.
+# TYPE flare_host_cache_disk_records gauge
+flare_host_cache_disk_records 0
+# HELP flare_host_cache_disk_bytes Bytes of record files in the host store's record directory.
+# TYPE flare_host_cache_disk_bytes gauge
+flare_host_cache_disk_bytes 0
+# HELP flare_host_cache_outbound_bytes_per_second Measured copy-out rate of the host store's most recent transfers.
+# TYPE flare_host_cache_outbound_bytes_per_second gauge
+flare_host_cache_outbound_bytes_per_second 0
+# HELP flare_host_cache_inbound_bytes_per_second Measured restore rate of the host store's most recent transfers.
+# TYPE flare_host_cache_inbound_bytes_per_second gauge
+flare_host_cache_inbound_bytes_per_second 0
+# HELP flare_total_kv_pages Total pages in the per-rank KV pool before checkpoint retention.
+# TYPE flare_total_kv_pages gauge
+flare_total_kv_pages 164295
+# HELP flare_kv_page_tokens Logical history tokens per KV page, including compressed storage.
+# TYPE flare_kv_page_tokens gauge
+flare_kv_page_tokens 128
+# HELP flare_decode_weight_bytes Bytes of weights one decode step reads for one request, as the package declares; zero when undeclared.
+# TYPE flare_decode_weight_bytes gauge
+flare_decode_weight_bytes 0
+# HELP flare_total_kv_tokens Logical token capacity of the per-rank KV pool before checkpoint retention.
+# TYPE flare_total_kv_tokens gauge
+flare_total_kv_tokens 21029760
+# HELP flare_free_kv_tokens Logical token capacity of KV pages reusable after completed GPU fences.
+# TYPE flare_free_kv_tokens gauge
+flare_free_kv_tokens 2176
+# HELP flare_cached_kv_tokens Logical token capacity of pages owned by immutable checkpoints.
+# TYPE flare_cached_kv_tokens gauge
+flare_cached_kv_tokens 14772096
+# HELP flare_input_decoded_images_total Images decoded from encoded request sources.
+# TYPE flare_input_decoded_images_total counter
+flare_input_decoded_images_total 6310
+# HELP flare_input_prepared_images_total Images resized and converted into vision input tensors.
+# TYPE flare_input_prepared_images_total counter
+flare_input_prepared_images_total 185
+# HELP flare_input_decoded_source_bytes Decoded source bytes retained for one-use image preparation.
+# TYPE flare_input_decoded_source_bytes gauge
+flare_input_decoded_source_bytes 0
+# HELP flare_input_decoded_source_capacity Maximum decoded source bytes retained across requests.
+# TYPE flare_input_decoded_source_capacity gauge
+flare_input_decoded_source_capacity 536870912
+# HELP flare_input_cache_metadata_hits_total Coalesced source-description lookups served by host retention.
+# TYPE flare_input_cache_metadata_hits_total counter
+flare_input_cache_metadata_hits_total 0
+# HELP flare_input_cache_metadata_misses_total Coalesced source-description lookups requiring decoding.
+# TYPE flare_input_cache_metadata_misses_total counter
+flare_input_cache_metadata_misses_total 0
+# HELP flare_input_cache_payload_hits_total Coalesced prepared-input lookups served by host retention.
+# TYPE flare_input_cache_payload_hits_total counter
+flare_input_cache_payload_hits_total 0
+# HELP flare_input_cache_payload_misses_total Coalesced prepared-input lookups requiring preprocessing.
+# TYPE flare_input_cache_payload_misses_total counter
+flare_input_cache_payload_misses_total 0
+# HELP flare_input_cache_memory_hits_total Prepared-input records read from host memory.
+# TYPE flare_input_cache_memory_hits_total counter
+flare_input_cache_memory_hits_total 0
+# HELP flare_input_cache_disk_hits_total Prepared-input records read from disk.
+# TYPE flare_input_cache_disk_hits_total counter
+flare_input_cache_disk_hits_total 0
+# HELP flare_input_cache_failures_total Failed prepared-input reads or writes.
+# TYPE flare_input_cache_failures_total counter
+flare_input_cache_failures_total 0
+# HELP flare_input_cache_stored_total Prepared-input records committed to disk.
+# TYPE flare_input_cache_stored_total counter
+flare_input_cache_stored_total 0
+# HELP flare_input_cache_skipped_total Prepared-input jobs skipped because a resource bound was reached.
+# TYPE flare_input_cache_skipped_total counter
+flare_input_cache_skipped_total 0
+# HELP flare_input_cache_queued Outstanding prepared-input retention jobs.
+# TYPE flare_input_cache_queued gauge
+flare_input_cache_queued 0
+# HELP flare_input_cache_pending_writes Prepared-input writes waiting for shared disk capacity.
+# TYPE flare_input_cache_pending_writes gauge
+flare_input_cache_pending_writes 0
+# HELP flare_input_cache_staging_bytes Prepared-input bytes held by queued writes and disk-read leases.
+# TYPE flare_input_cache_staging_bytes gauge
+flare_input_cache_staging_bytes 0
+# HELP flare_input_cache_staging_limit Prepared-input serialization and disk-read window capacity.
+# TYPE flare_input_cache_staging_limit gauge
+flare_input_cache_staging_limit 0
+# HELP flare_input_cache_index_bytes Host bytes charged to the prepared-input disk index.
+# TYPE flare_input_cache_index_bytes gauge
+flare_input_cache_index_bytes 0
+# HELP flare_input_cache_memory_limit Host memory capacity reserved for prepared-input retention.
+# TYPE flare_input_cache_memory_limit gauge
+flare_input_cache_memory_limit 0
+# HELP flare_input_cache_memory_records Prepared-input records retained in host memory.
+# TYPE flare_input_cache_memory_records gauge
+flare_input_cache_memory_records 0
+# HELP flare_input_cache_memory_bytes Host bytes charged to prepared-input retention and active leases.
+# TYPE flare_input_cache_memory_bytes gauge
+flare_input_cache_memory_bytes 0
+# HELP flare_input_cache_disk_records Prepared-input records retained on disk.
+# TYPE flare_input_cache_disk_records gauge
+flare_input_cache_disk_records 0
+# HELP flare_input_cache_disk_bytes Prepared-input record bytes retained on disk.
+# TYPE flare_input_cache_disk_bytes gauge
+flare_input_cache_disk_bytes 0
+# HELP flare_http_inflight_requests Reserved HTTP admission slots; a batch holds one slot per generation.
+# TYPE flare_http_inflight_requests gauge
+flare_http_inflight_requests 0
+# HELP flare_http_request_capacity Maximum simultaneous reserved HTTP generation slots.
+# TYPE flare_http_request_capacity gauge
+flare_http_request_capacity 160
+# HELP flare_frontend_active_workers CPU workers preparing tokenizer, image and grammar inputs.
+# TYPE flare_frontend_active_workers gauge
+flare_frontend_active_workers 0
+# HELP flare_frontend_worker_capacity Maximum simultaneous CPU preparation workers.
+# TYPE flare_frontend_worker_capacity gauge
+flare_frontend_worker_capacity 32
+# HELP flare_uptime_seconds Seconds since the HTTP listener started.
+# TYPE flare_uptime_seconds gauge
+flare_uptime_seconds 88982
+# HELP flare_generated_tokens_last_minute Committed generated tokens during the most recent minute, sampled every five seconds.
+# TYPE flare_generated_tokens_last_minute gauge
+flare_generated_tokens_last_minute 12238

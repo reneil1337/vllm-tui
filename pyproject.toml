@@ -1,0 +1,40 @@
+[project]
+name = "vllm-tui"
+version = "0.1.0"
+description = "btop-style terminal dashboard for vLLM inference servers that follows your Omarchy theme"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Reneil", email = "rene@qwellcode.de" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.28.1",
+    "textual>=8.2.8",
+]
+
+[project.scripts]
+vllm-tui = "vllm_tui:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.4.1.post1",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+# The dashboard draws · ‹ › × – on purpose.
+ignore = ["RUF001", "RUF002", "RUF003"]

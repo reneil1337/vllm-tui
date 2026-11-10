@@ -1,0 +1,1 @@
+{"object": "list", "data": [{"id": "deepseek-v4.1-flash-1017", "object": "model", "created": 1793575903, "owned_by": "tensorfold", "context_length": 1048576, "max_model_len": 1048576, "reasoning": {"default_enabled": true, "default_effort": "high", "supported_efforts": ["max", "xhigh", "high", "medium", "low", "minimal", "none"]}}]}
