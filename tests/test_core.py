@@ -148,9 +148,10 @@ def test_flare_detected_from_metrics():
 
 
 def test_flare_busy_pool_is_not_reported_as_empty():
-    """A busy pool stays low on KV when the cache keeps most pages — that is
-    vLLM's definition — but the kept share must be visible next to it."""
-    s = prom.parse(
+    """Flare only reports KV a live request owns privately; the context it
+    resumed is shared with its checkpoint. The deriver estimates that share
+    from the cache's own reuse figures, like vLLM counts referenced blocks."""
+    base = (
         "flare_total_kv_pages 1000\n"
         "flare_free_kv_pages 10\n"
         "flare_cached_kv_pages 700\n"
@@ -158,9 +159,33 @@ def test_flare_busy_pool_is_not_reported_as_empty():
         "flare_kv_page_tokens 128\n"
         "flare_uptime_seconds 10\n"
     )
-    assert math.isclose(s.get(F.KV_POOL), 0.04, abs_tol=1e-9)
-    assert math.isclose(s.get(F.KV_KEPT), 0.95, abs_tol=1e-9)
-    assert s.get(F.KV_POOL_TOKENS) == 128000
+    idle = prom.parse(base + "flare_active_requests 0\n")
+    # 1000 - 10 free - 950 kept = 40 pages the request still owns privately.
+    assert math.isclose(idle.get(F.KV_POOL), 0.04, abs_tol=1e-9)
+    assert math.isclose(idle.get(F.KV_KEPT), 0.95, abs_tol=1e-9)
+    assert idle.get(F.KV_POOL_TOKENS) == 128000
+
+    # Two live requests, and one admission in the poll restored a 12000-token
+    # prefix (512000 - 500000 reused, 5 - 4 hits).
+    def sample(reused, hits):
+        return prom.parse(
+            base
+            + "flare_active_requests 2\n"
+            + f"flare_cache_reused_tokens_total {reused}\n"
+            + f"flare_cache_hits_total {hits}\n"
+        )
+
+    a, b = sample(500000, 4), sample(512000, 5)
+    a.t, b.t = 0.0, 2.0
+    info = ServerInfo()
+    ident = identify(a, None, info)
+    d = Deriver()
+    d.on_sample(a, ident, info)
+    d.on_sample(b, ident, info)
+    v = d.fill(View(), 2.0, 2.0, 0)
+    # 40 private pages + 2 x 12000/128 pages = 227.5 of 1000.
+    assert math.isclose(v.kv_pct, 22.75, abs_tol=1e-6)
+    assert math.isclose(v.kv_kept_pct, 95.0, abs_tol=1e-6)
 
 
 def test_flare_numbers_are_the_same_features():

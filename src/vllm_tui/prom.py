@@ -76,6 +76,7 @@ class F(IntEnum):
     FLARE_FAILED = 43
     FLARE_REASONING_CUTS = 44
     KV_KEPT = 50  # Flare: share of the pool held by checkpoints + snapshots
+    FLARE_HITS = 51  # flare_cache_hits_total: lookups that returned a checkpoint
 
 
 F_COUNT = len(F)
@@ -180,6 +181,7 @@ FLARE_TABLE: dict[str, tuple[F | None, int]] = {
     "generated_tokens_total": (F.GEN_TOKENS, SUM),  # committed, live
     "prefill_tokens_total": (F.FLARE_PREFILL, SUM),  # per completed chunk: PP live
     "cache_reused_tokens_total": (F.FLARE_REUSED, SUM),
+    "cache_hits_total": (F.FLARE_HITS, SUM),
     "total_kv_tokens": (F.FLARE_KV_TOTAL, SUM),
     "free_kv_tokens": (F.FLARE_KV_FREE, SUM),
     "cached_kv_tokens": (F.FLARE_KV_CACHED, SUM),
@@ -374,13 +376,9 @@ def parse(text: str, sample: Sample | None = None) -> Sample:
     # flare: KV use is what no reusable state claims — not free, and not
     # owned by a cached checkpoint or a snapshot (docs/runtime-core-design.md:
     # snapshot_backing_pages "counts page ids excluded by owned snapshots").
-    # That is vLLM's definition too: `BlockPool.get_usage()` is
-    # 1 - free_block_queue/total, and a block released by a finished request
-    # keeps its hash but re-enters the free queue (only `touch()` on a live
-    # prefix hit takes it out again). So cached, unreferenced blocks are free
-    # on both engines, and KV means "pages live requests hold".
-    # The share the cache keeps is reported beside it so a busy-but-cached
-    # pool does not read as empty.
+    # That is only the private suffix a live request owns: the context it
+    # resumed is shared with the checkpoint that owns it. The deriver adds
+    # that shared share (see `_flare_kv_pct`); this value is the floor.
     if s.has(F.FLARE_TOTAL_PAGES) and s.has(F.FLARE_FREE_PAGES):
         total = s.get(F.FLARE_TOTAL_PAGES)
         free = s.get(F.FLARE_FREE_PAGES)

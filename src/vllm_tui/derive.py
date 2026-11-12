@@ -244,6 +244,7 @@ class Deriver:
         self.last_pp_eng = NAN
         self.prefilling = False
         self.prefill_since = 0.0
+        self.mean_prefix = NAN  # flare: mean cached prefix a hit restores, tokens
 
     # -- streams ---------------------------------------------------------
     def _live_streams(self, ctx_window: float) -> list[StreamView]:
@@ -275,6 +276,41 @@ class Deriver:
         self.pp_ring.append(pp)
         self.kv_ring.append(kv)
 
+    def _kv_now(self, s: Sample, e: Engine) -> float:
+        kv = _kv_pct(s)
+        if e is not Engine.FLARE:
+            return kv
+        shared = self._flare_kv_pct(s)
+        return kv if _isnan(shared) else shared
+
+    def _flare_kv_pct(self, s: Sample) -> float:
+        """Flare reports the KV a live request owns privately; the context it
+        resumed is shared with the checkpoint that owns it, so vLLM would count
+        those blocks as used while flare files them under `kept`. Estimate that
+        share from the cache itself: the mean prefix a lookup restores times
+        the requests that are live now."""
+        if not (s.has(F.FLARE_TOTAL_PAGES) and s.has(F.FLARE_PAGE_TOKENS) and s.has(F.KV_POOL)):
+            return NAN
+        total, page = s.get(F.FLARE_TOTAL_PAGES), s.get(F.FLARE_PAGE_TOKENS)
+        if total <= 0 or page <= 0:
+            return NAN
+        if len(self.win) >= 2:
+            prev = self.win[-2]
+            if s.has(F.FLARE_REUSED) and prev.has(F.FLARE_REUSED) and s.has(F.FLARE_HITS) and prev.has(F.FLARE_HITS):
+                reused = s.get(F.FLARE_REUSED) - prev.get(F.FLARE_REUSED)
+                hits = s.get(F.FLARE_HITS) - prev.get(F.FLARE_HITS)
+                if hits > 0 and reused >= 0:
+                    self.mean_prefix = reused / hits
+        if _isnan(self.mean_prefix) and s.has(F.FLARE_REUSED) and s.has(F.FLARE_HITS) and s.get(F.FLARE_HITS) > 0:
+            # Seed from the server's own history before the first new hit.
+            self.mean_prefix = s.get(F.FLARE_REUSED) / s.get(F.FLARE_HITS)
+        if _isnan(self.mean_prefix):
+            return NAN
+        running = s.get(F.RUNNING) if s.has(F.RUNNING) else 0.0
+        free = s.get(F.FLARE_FREE_PAGES) if s.has(F.FLARE_FREE_PAGES) else 0.0
+        live = s.get(F.KV_POOL) * total + running * self.mean_prefix / page
+        return max(0.0, min(1.0, min(live, total - free) / total)) * 100.0
+
     # -- events ----------------------------------------------------------
     def on_sample(self, s: Sample, ident: Identity, info: ServerInfo) -> bool:
         """A successful /metrics poll. Returns True on an engine restart."""
@@ -297,6 +333,7 @@ class Deriver:
             self.tg_busy = 0
             self.restarted = True
             self.restart_t = s.t
+            self.mean_prefix = NAN
             self.was_active = [False] * SAMPLE_STREAMS
             self.lingering = [False] * SAMPLE_STREAMS
 
@@ -328,7 +365,7 @@ class Deriver:
                 self.tg_peak = tg
             self.tg_sum += tg
             self.tg_busy += 1
-        kv = _kv_pct(s)
+        kv = self._kv_now(s, e)
         # Prefill detection is engine-independent: a request is running,
         # nothing has been generated since the last poll, and its cache is
         # filling. Flare, vLLM and TensorFold all report enough for this.
@@ -493,7 +530,7 @@ class Deriver:
             if math.isnan(v.max_batch) and cur.has(F.FLARE_FREE_SLOTS):
                 v.max_batch = v.running + cur.get(F.FLARE_FREE_SLOTS)
             v.ctx_window = self.info.context_length
-            v.kv_pct = _kv_pct(cur)
+            v.kv_pct = self._kv_now(cur, e)
             v.kv_capacity = cur.get(F.KV_POOL_TOKENS) if cur.has(F.KV_POOL_TOKENS) else v.ctx_window
             v.kv_tokens = v.kv_pct / 100.0 * v.kv_capacity
             v.kv_kept_pct = cur.get(F.KV_KEPT) * 100.0 if cur.has(F.KV_KEPT) else NAN
