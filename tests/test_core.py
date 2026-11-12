@@ -140,9 +140,27 @@ def test_flare_detected_from_metrics():
     assert info.model == "ds41-flash-local"
     assert info.max_batch == 32  # flare.max_concurrency from /v1/models
     assert info.context_length == 1048576
-    # KV use excludes cached checkpoints and snapshot backing: idle reads 0.
+    # KV use excludes cached checkpoints and snapshot backing, like vLLM's
+    # free queue: idle reads 0, everything is "kept" and reusable.
     assert math.isclose(s.get(F.KV_POOL), 0.0, abs_tol=1e-6)
+    assert math.isclose(s.get(F.KV_KEPT), (115392 + 48871) / 164295, abs_tol=1e-6)
     assert s.get(F.KV_POOL_TOKENS) == 21029760
+
+
+def test_flare_busy_pool_is_not_reported_as_empty():
+    """A busy pool stays low on KV when the cache keeps most pages — that is
+    vLLM's definition — but the kept share must be visible next to it."""
+    s = prom.parse(
+        "flare_total_kv_pages 1000\n"
+        "flare_free_kv_pages 10\n"
+        "flare_cached_kv_pages 700\n"
+        "flare_snapshot_backing_pages 250\n"
+        "flare_kv_page_tokens 128\n"
+        "flare_uptime_seconds 10\n"
+    )
+    assert math.isclose(s.get(F.KV_POOL), 0.04, abs_tol=1e-9)
+    assert math.isclose(s.get(F.KV_KEPT), 0.95, abs_tol=1e-9)
+    assert s.get(F.KV_POOL_TOKENS) == 128000
 
 
 def test_flare_numbers_are_the_same_features():

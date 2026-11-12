@@ -75,6 +75,7 @@ class F(IntEnum):
     FLARE_WEIGHT_BYTES = 42
     FLARE_FAILED = 43
     FLARE_REASONING_CUTS = 44
+    KV_KEPT = 50  # Flare: share of the pool held by checkpoints + snapshots
 
 
 F_COUNT = len(F)
@@ -373,14 +374,23 @@ def parse(text: str, sample: Sample | None = None) -> Sample:
     # flare: KV use is what no reusable state claims — not free, and not
     # owned by a cached checkpoint or a snapshot (docs/runtime-core-design.md:
     # snapshot_backing_pages "counts page ids excluded by owned snapshots").
+    # That is vLLM's definition too: `BlockPool.get_usage()` is
+    # 1 - free_block_queue/total, and a block released by a finished request
+    # keeps its hash but re-enters the free queue (only `touch()` on a live
+    # prefix hit takes it out again). So cached, unreferenced blocks are free
+    # on both engines, and KV means "pages live requests hold".
+    # The share the cache keeps is reported beside it so a busy-but-cached
+    # pool does not read as empty.
     if s.has(F.FLARE_TOTAL_PAGES) and s.has(F.FLARE_FREE_PAGES):
         total = s.get(F.FLARE_TOTAL_PAGES)
-        claimed = s.get(F.FLARE_FREE_PAGES)
+        free = s.get(F.FLARE_FREE_PAGES)
+        kept = 0.0
         for f in (F.FLARE_CACHED_PAGES, F.FLARE_KV_BACKING):
             if s.has(f):
-                claimed += s.get(f)
+                kept += s.get(f)
         if total > 0 and math.isnan(s.v[F.KV_POOL]):
-            s.v[F.KV_POOL] = max(0.0, min(1.0, (total - claimed) / total))
+            s.v[F.KV_POOL] = max(0.0, min(1.0, (total - free - kept) / total))
+            s.v[F.KV_KEPT] = max(0.0, min(1.0, kept / total))
             if s.has(F.FLARE_PAGE_TOKENS):
                 s.v[F.KV_POOL_TOKENS] = total * s.get(F.FLARE_PAGE_TOKENS)
     elif s.has(F.FLARE_KV_TOTAL):
@@ -389,6 +399,7 @@ def parse(text: str, sample: Sample | None = None) -> Sample:
         cached = s.get(F.FLARE_KV_CACHED) if s.has(F.FLARE_KV_CACHED) else 0.0
         if total > 0 and math.isnan(s.v[F.KV_POOL]):
             s.v[F.KV_POOL] = max(0.0, min(1.0, (total - free - cached) / total))
+            s.v[F.KV_KEPT] = max(0.0, min(1.0, cached / total))
             s.v[F.KV_POOL_TOKENS] = total
     if s.has(F.FLARE_PREFILL) or s.has(F.FLARE_REUSED):
         prefill = s.get(F.FLARE_PREFILL) if s.has(F.FLARE_PREFILL) else 0.0

@@ -238,8 +238,12 @@ def throughput(c: Canvas, y: int, v: View, ctx: Ctx, hero_rows: int) -> int:
     tok = ""
     if not nan(v.kv_tokens) and not nan(v.kv_capacity):
         tok = f"{fmt.tokens(v.kv_tokens)}/{fmt.tokens(v.kv_capacity)}"
+    kept = "" if nan(v.kv_kept_pct) else fmt.pct(v.kv_kept_pct)
     text = (
-        3 + len(now) + 1 + (0 if nan(v.kv_peak) else 3 + 5 + len(pk)) + 3 + (len(tok) + 4 if tok else len(fmt.NO_DATA))
+        3 + len(now) + 1
+        + (0 if nan(v.kv_peak) else 3 + 5 + len(pk))
+        + 3 + (len(tok) + 4 if tok else len(fmt.NO_DATA))
+        + (0 if not kept else 3 + 5 + len(kept))
     )
     bar_w = max(3, min(40, c.w - 4 - text))
     w = Writer(c, r, 2)
@@ -253,6 +257,8 @@ def throughput(c: Canvas, y: int, v: View, ctx: Ctx, hero_rows: int) -> int:
         w.put(tok, "VALUE").put(" tok", "DIM")
     else:
         w.put(fmt.NO_DATA, "DIM")
+    if kept:
+        w.put(SEP, "DIM").put("kept ", "LABEL").put(kept, "VALUE")
     return y + height
 
 

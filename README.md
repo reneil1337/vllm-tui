@@ -94,7 +94,7 @@ In Settings you can pin any installed Omarchy theme instead (stock or from `~/.c
 | **PP last** | prefill speed of the most recently finished request (computed prompt tokens ÷ its prefill seconds; cache hits excluded). Engines don't report prefill progress while it's happening, so there's no live PP |
 | **prefilling Ns** | a request is running, nothing is being generated yet, and its KV cache is filling |
 | **run · wait** | running (out of the batch limit, where known) and queued requests |
-| **KV / peak** | KV-cache use now, and the highest reading over the last 60 polls (`used/pool tok`) |
+| **KV / peak** | KV-cache use now, and the highest reading over the last 60 polls (`used/pool tok`). Same number on every engine: pages that live requests hold, so cached-but-reusable blocks are not counted. On Flare the rest of the pool is held by checkpoints and snapshots and shown as `kept` — heavy cache reuse legitimately reads as low KV |
 | **Streams** | per-slot table for TensorFold. It's hidden for vLLM, which has no per-request metrics |
 | **TTFT · MTP · cache-hit** | mean time to first token · speculative-decoding acceptance · prompt tokens served from the prefix cache |
 | **TTFT p50/p99 · e2e p50/p99** | latency percentiles over the requests that finished in the last 5 minutes, from the engine's histogram buckets (vLLM and TensorFold export them; Flare has no histograms, so the line falls back to its own counters) |
@@ -114,7 +114,7 @@ A server that goes down is retried after 2 s, then 4 s, then every 9 s.
 | detected by | `vllm:*` metric names, confirmed by `/version` | `flare_*` metric names, confirmed by `flare_uptime_seconds` | `tensorfold:*` metric names, confirmed by `/health` |
 | live decode (TG) | `generation_tokens_total` | `generated_tokens_total` | `generation_tokens_total` + running |
 | prefill | PP last, per finished request | **PP live** (Flare counts prefill per 4096-token chunk) | PP last, per finished request |
-| KV | `kv_cache_usage_perc` pool | pages not free, cached or snapshot-backed | per-stream ratio |
+| KV | `kv_cache_usage_perc` pool | pages live requests hold; checkpoint- and snapshot-kept pages are reusable (vLLM keeps prefix-cached blocks in its free queue too) — the kept share is shown as `kept` | per-stream ratio |
 | MTP | accepted ÷ drafted tokens | accepted ÷ verification draft positions | accepted ÷ drafted tokens |
 | streams | not exported | not exported | `stream_*` series |
 

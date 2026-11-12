@@ -79,6 +79,7 @@ class View:
     kv_pct: float = NAN
     kv_tokens: float = NAN
     kv_capacity: float = NAN
+    kv_kept_pct: float = NAN
     kv_peak: float = NAN
     ctx_window: float = NAN
 
@@ -495,6 +496,7 @@ class Deriver:
             v.kv_pct = _kv_pct(cur)
             v.kv_capacity = cur.get(F.KV_POOL_TOKENS) if cur.has(F.KV_POOL_TOKENS) else v.ctx_window
             v.kv_tokens = v.kv_pct / 100.0 * v.kv_capacity
+            v.kv_kept_pct = cur.get(F.KV_KEPT) * 100.0 if cur.has(F.KV_KEPT) else NAN
 
             rows = self._live_streams(v.ctx_window)
             for k, r in enumerate(rows):
